@@ -217,4 +217,5 @@ Other tips for maximizing reCAPTCHA scores:
 
 ## License
 
-MIT — see [LICENSE](https://github.com/CloakHQ/CloakBrowser/blob/main/LICENSE).
+- **Wrapper code** (this repository) — MIT. See [LICENSE](https://github.com/CloakHQ/CloakBrowser/blob/main/LICENSE).
+- **CloakBrowser binary** (compiled Chromium) — free to use, no redistribution. See [BINARY-LICENSE.md](https://github.com/CloakHQ/CloakBrowser/blob/main/BINARY-LICENSE.md).
