@@ -202,7 +202,7 @@ browser = launch(headless=False)
 browser = launch(proxy="http://user:pass@proxy:8080")
 
 # With extra Chrome args
-browser = launch(args=["--disable-gpu", "--window-size=1920,1080"])
+browser = launch(args=["--disable-gpu"])
 
 # With timezone and locale (sets both binary flags and Playwright context)
 browser = launch(timezone="America/New_York", locale="en-US")
@@ -283,7 +283,7 @@ const browser = await launch();
 const browser = await launch({
   headless: false,
   proxy: 'http://user:pass@proxy:8080',
-  args: ['--window-size=1920,1080'],
+  args: ['--fingerprint=12345'],
   timezone: 'America/New_York',
   locale: 'en-US',
 });
@@ -370,13 +370,10 @@ Every `launch()` call sets these automatically. Defaults are **platform-aware** 
 |------|--------------|---------------|----------|
 | `--fingerprint` | Random (10000–99999) | Random (10000–99999) | Master seed for canvas, WebGL, audio, fonts, client rects |
 | `--fingerprint-platform` | `windows` | `macos` | `navigator.platform`, User-Agent OS, GPU pool selection |
-| `--fingerprint-hardware-concurrency` | `8` | *(not set — uses real value)* | `navigator.hardwareConcurrency` |
 | `--fingerprint-gpu-vendor` | `NVIDIA Corporation` | `Google Inc. (Apple)` | WebGL `UNMASKED_VENDOR_WEBGL` |
 | `--fingerprint-gpu-renderer` | `NVIDIA GeForce RTX 3070` | `ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)` | WebGL `UNMASKED_RENDERER_WEBGL` |
-| `--fingerprint-device-memory` | `8` | *(not set)* | `navigator.deviceMemory` |
-| `--fingerprint-screen-width` | `1920` | *(not set)* | Screen width reporting |
-| `--fingerprint-screen-height` | `1080` | *(not set)* | Screen height reporting |
-| `--window-size` | `1920,1080` | *(not set)* | Browser window dimensions |
+
+The binary auto-generates hardware concurrency (8), device memory (8), and screen dimensions (1920x1080 on Windows/Linux, 1440x900 on macOS) from the seed. Override with explicit flags if needed.
 
 > **Using the binary directly?** It works out of the box with zero flags — the binary auto-spoofs everything. Pass `--fingerprint=seed` for a persistent identity, or use explicit flags like `--fingerprint-gpu-renderer` to override any auto-generated value.
 
@@ -388,6 +385,10 @@ Supported by the binary but **not set by default** — pass via `args` to custom
 
 | Flag | Controls |
 |------|----------|
+| `--fingerprint-hardware-concurrency` | `navigator.hardwareConcurrency` (auto-generated: `8`) |
+| `--fingerprint-device-memory` | `navigator.deviceMemory` in GB (auto-generated: `8`) |
+| `--fingerprint-screen-width` | Screen width (auto-generated: `1920` Win/Linux, `1440` macOS) |
+| `--fingerprint-screen-height` | Screen height (auto-generated: `1080` Win/Linux, `900` macOS) |
 | `--fingerprint-brand` | Browser brand: `Chrome`, `Edge`, `Opera`, `Vivaldi` |
 | `--fingerprint-brand-version` | Brand version (UA + Client Hints) |
 | `--fingerprint-platform-version` | Client Hints platform version |
@@ -409,7 +410,6 @@ browser = launch(args=["--fingerprint=42069"])
 browser = launch(stealth_args=False, args=[
     "--fingerprint=42069",
     "--fingerprint-platform=windows",
-    "--fingerprint-hardware-concurrency=8",
     "--fingerprint-gpu-vendor=NVIDIA Corporation",
     "--fingerprint-gpu-renderer=NVIDIA GeForce RTX 3070",
 ])

@@ -72,7 +72,7 @@ const browser = await launch({ headless: false });
 
 // Extra Chrome args
 const browser = await launch({
-  args: ['--window-size=1920,1080'],
+  args: ['--fingerprint=12345'],
 });
 
 // With timezone and locale (sets --fingerprint-timezone and --lang binary flags)
