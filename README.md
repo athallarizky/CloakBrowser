@@ -35,7 +35,7 @@ Drop-in Playwright/Puppeteer replacement for Python and JavaScript.<br>
 Same API, same code — just swap the import. <strong>3 lines of code, 30 seconds to unblock.</strong>
 </p>
 
-- 🔒 **25 source-level C++ patches** — not JS injection, not config flags
+- 🔒 **26 source-level C++ patches** — not JS injection, not config flags
 - 🛡️ **CDP stealth built-in** — uses [Patchright](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright) to reduce Playwright's automation footprint
 - 🎯 **0.9 reCAPTCHA v3 score** — human-level, server-verified
 - ☁️ **Passes Cloudflare Turnstile**, FingerprintJS, BrowserScan — 30/30 tests
@@ -104,14 +104,16 @@ page.goto("https://example.com")
 
 > ⭐ **Star** to show support — **[Watch releases](https://github.com/CloakHQ/CloakBrowser/subscription)** to get notified when new builds drop.
 
-## What's New in v0.3.0
+## What's New in v0.3.4
 
-- **Chromium 145** — latest stable, 25 fingerprint patches (up from 16). All platforms
-- **9 new patches** — screen dimensions, device memory, audio, WebGL, and more
-- **SHA-256 checksum verification** — binary downloads are verified for integrity
-- **CDP hardening** — audited and patched known automation detection vectors
+- **All 4 platforms** — Linux x64, macOS arm64, macOS x64, and Windows x64 all on Chromium 145
+- **26 fingerprint patches** — 10 new patches since v142 (screen, device memory, audio, WebGL, auto-spoof, and more)
+- **Stealthy with zero flags** — binary auto-generates a random fingerprint seed at startup. No configuration required
+- **Deterministic seeds** — `--fingerprint=seed` produces the same identity across launches for session persistence
 - **Full stealth audit** — every patch reviewed for detection vectors, multiple fixes shipped
 - **Timezone & locale from proxy IP** — `launch(proxy="...", geoip=True)` auto-detects timezone and locale
+- **SHA-256 checksum verification** — binary downloads are verified for integrity
+- **CDP hardening** — audited and patched known automation detection vectors
 
 See the full [CHANGELOG.md](CHANGELOG.md) for details.
 
@@ -179,7 +181,7 @@ CloakBrowser is a thin wrapper (Python + JavaScript) around a custom-built Chrom
 3. **Every launch** → Playwright or Puppeteer starts with our binary + stealth args
 4. **You write code** → standard Playwright/Puppeteer API, nothing new to learn
 
-The binary includes 25 source-level patches covering canvas, WebGL, audio, fonts, GPU, screen properties, hardware reporting, and automation signal removal.
+The binary includes 26 source-level patches covering canvas, WebGL, audio, fonts, GPU, screen properties, hardware reporting, and automation signal removal.
 
 These are compiled into the Chromium binary — not injected via JavaScript, not set via flags.
 
@@ -352,7 +354,7 @@ The binary is **stealthy by default** — no flags needed. It auto-generates a r
 | **`--fingerprint=seed`** | Deterministic identity from the seed. Same seed = same fingerprint across launches. Use this for session persistence (returning visitor). |
 | **`--fingerprint=seed` + explicit flags** | Explicit flags override individual auto-generated values. The seed fills in everything else. |
 
-The binary detects its platform at compile time — a macOS binary reports Apple GPU and macOS screen (1440x900), a Linux binary reports NVIDIA GPU and 1080p screen. Override with `--fingerprint-platform` for cross-platform spoofing (e.g. Linux binary appearing as Windows).
+The binary detects its platform at compile time — a macOS binary reports as macOS with Apple GPU, a Linux binary reports as Linux with NVIDIA GPU. The **wrapper** overrides this on Linux by passing `--fingerprint-platform=windows`, so sessions appear as Windows desktops (more common fingerprint, harder to cluster). Use `--fingerprint-platform` for cross-platform spoofing when running the binary directly.
 
 > **Tip: Use a fixed seed when revisiting the same site.** A random seed makes every session look like a different device — which can be suspicious when hitting the same site repeatedly from the same IP. For reCAPTCHA v3 Enterprise and similar scoring systems, a fixed seed produces a consistent fingerprint across sessions, making you look like a returning visitor:
 > ```python
@@ -364,7 +366,7 @@ The binary detects its platform at compile time — a macOS binary reports Apple
 
 ### Default Fingerprint
 
-Every `launch()` call sets these automatically. Defaults are **platform-aware** — macOS runs as a native Mac browser, Linux and Windows use the Windows fingerprint profile:
+Every `launch()` call sets these automatically. The **wrapper** applies platform-aware defaults — on Linux it spoofs as Windows for a more common fingerprint, on macOS it runs as a native Mac browser:
 
 | Flag | Linux/Windows Default | macOS Default | Controls |
 |------|--------------|---------------|----------|
@@ -437,10 +439,10 @@ browser = launch(args=[
 
 | Platform | Chromium | Patches | Status |
 |---|---|---|---|
-| Linux x86_64 | 145 | 25 | ✅ Latest |
-| macOS arm64 (Apple Silicon) | 145 | 25 | ✅ Latest |
-| macOS x86_64 (Intel) | 145 | 25 | ✅ Latest |
-| Windows x86_64 | 145 | 25 | ✅ Latest |
+| Linux x86_64 | 145 | 26 | ✅ Latest |
+| macOS arm64 (Apple Silicon) | 145 | 26 | ✅ Latest |
+| macOS x86_64 (Intel) | 145 | 26 | ✅ Latest |
+| Windows x86_64 | 145 | 26 | ✅ Latest |
 
 The wrapper auto-downloads the correct binary for your platform.
 
@@ -463,9 +465,9 @@ The wrapper auto-downloads the correct binary for your platform.
 
 | Feature | Status |
 |---------|--------|
-| Linux x64 — Chromium 145 (25 patches) | ✅ Released |
-| macOS arm64/x64 — Chromium 145 (25 patches) | ✅ Released |
-| Windows x64 — Chromium 145 (25 patches) | ✅ Released |
+| Linux x64 — Chromium 145 (26 patches) | ✅ Released |
+| macOS arm64/x64 — Chromium 145 (26 patches) | ✅ Released |
+| Windows x64 — Chromium 145 (26 patches) | ✅ Released |
 | JavaScript/Puppeteer + Playwright support | ✅ Released |
 | Fingerprint rotation per session | ✅ Released |
 | Built-in proxy rotation | 📋 Planned |

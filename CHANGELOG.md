@@ -6,6 +6,17 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ---
 
+## [0.3.4] — 2026-03-04
+
+Binary v14: auto-spoof restored with seed, wrapper simplified to match.
+
+- **[binary]** Restore full auto-spoof when `--fingerprint=seed` is set — all randomized properties now derive from the seed consistently
+- **[binary]** Auto-inject random fingerprint seed at startup if none provided. Binary is stealthy with zero flags
+- **[binary]** 26 source-level C++ patches (up from 25)
+- **[wrapper]** Simplify default stealth args — remove flags the binary now auto-generates. Wrapper still sets platform profile on Linux and `--no-sandbox`
+- **[wrapper]** Fix timezone in `launch_context()` — use Playwright's per-context timezone instead of binary flag, fixing mismatch when creating new browser contexts with geoip
+- **[wrapper]** Clarify README platform detection behavior
+
 ## [0.3.3] — 2026-03-03
 
 All platforms now run Chromium 145 v2 with 25 patches. Windows x64 added.

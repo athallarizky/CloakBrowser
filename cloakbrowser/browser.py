@@ -198,8 +198,11 @@ def launch_context(
     # Resolve geoip BEFORE launch() to avoid double-resolution and ensure
     # resolved values flow to both binary flags AND context params
     timezone_id, locale = _maybe_resolve_geoip(geoip, proxy, timezone_id, locale)
+    # Skip --fingerprint-timezone binary flag: it only applies to the default
+    # context and interferes with Playwright's timezone_id on new contexts.
+    # Timezone is set via browser.new_context(timezone_id=...) below instead.
     browser = launch(headless=headless, proxy=proxy, args=args, stealth_args=stealth_args,
-                     timezone=timezone_id, locale=locale)
+                     timezone=None, locale=locale)
 
     context_kwargs: dict[str, Any] = {}
     if user_agent:
