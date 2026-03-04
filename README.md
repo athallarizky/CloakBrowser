@@ -579,6 +579,10 @@ You do NOT need `playwright install chromium`. CloakBrowser downloads its own bi
 patchright install-deps chromium
 ```
 
+**macOS: Blocked on some sites that pass on Linux**
+
+The macOS fingerprint profile has known inconsistencies that aggressive bot detection catches. If a site blocks you on macOS but works on Linux, switch to a Windows fingerprint profile by passing `stealth_args=False` and manually setting `--fingerprint-platform=windows` with matching GPU flags (see [Fingerprint Management](#fingerprint-management) for the full flag list).
+
 **reCAPTCHA v3 scores are low (0.1–0.3)**
 
 Avoid `page.wait_for_timeout()` — it sends CDP protocol commands that reCAPTCHA detects. Use native sleep instead:
