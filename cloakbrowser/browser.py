@@ -57,6 +57,7 @@ def launch(
     timezone: str | None = None,
     locale: str | None = None,
     geoip: bool = False,
+    backend: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Launch stealth Chromium browser. Returns a Playwright Browser object.
@@ -76,6 +77,10 @@ def launch(
             Requires ``pip install cloakbrowser[geoip]``. Downloads ~70 MB
             GeoLite2-City database on first use.  Explicit timezone/locale
             always override geoip results.
+        backend: Playwright backend — 'playwright' (default) or 'patchright'.
+            Patchright suppresses CDP signals (helps reCAPTCHA v3 Enterprise)
+            but breaks proxy auth and add_init_script.
+            Override globally with CLOAKBROWSER_BACKEND env var.
         **kwargs: Passed directly to playwright.chromium.launch().
 
     Returns:
@@ -89,7 +94,7 @@ def launch(
         >>> print(page.title())
         >>> browser.close()
     """
-    from patchright.sync_api import sync_playwright
+    sync_playwright = _import_sync_playwright(_resolve_backend(backend))
 
     binary_path = ensure_binary()
     timezone, locale = _maybe_resolve_geoip(geoip, proxy, timezone, locale)
@@ -127,6 +132,7 @@ async def launch_async(
     timezone: str | None = None,
     locale: str | None = None,
     geoip: bool = False,
+    backend: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Async version of launch(). Returns a Playwright Browser object.
@@ -139,6 +145,7 @@ async def launch_async(
         timezone: IANA timezone (e.g. 'America/New_York'). Sets --fingerprint-timezone binary flag.
         locale: BCP 47 locale (e.g. 'en-US'). Sets --lang binary flag.
         geoip: Auto-detect timezone/locale from proxy IP (default False).
+        backend: Playwright backend — 'playwright' (default) or 'patchright'.
         **kwargs: Passed directly to playwright.chromium.launch().
 
     Returns:
@@ -157,7 +164,7 @@ async def launch_async(
         >>>
         >>> asyncio.run(main())
     """
-    from patchright.async_api import async_playwright
+    async_playwright = _import_async_playwright(_resolve_backend(backend))
 
     binary_path = ensure_binary()
     timezone, locale = _maybe_resolve_geoip(geoip, proxy, timezone, locale)
@@ -199,6 +206,7 @@ def launch_persistent_context(
     timezone: str | None = None,
     color_scheme: Literal["light", "dark", "no-preference"] | None = None,
     geoip: bool = False,
+    backend: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Launch stealth browser with a persistent profile and return a BrowserContext.
@@ -223,6 +231,7 @@ def launch_persistent_context(
             Default: None (uses Chromium default, which is 'light').
         geoip: Auto-detect timezone/locale from proxy IP (default False).
             Requires ``pip install cloakbrowser[geoip]``.
+        backend: Playwright backend — 'playwright' (default) or 'patchright'.
         **kwargs: Passed directly to playwright.chromium.launch_persistent_context().
 
     Returns:
@@ -236,7 +245,7 @@ def launch_persistent_context(
         >>> page.goto("https://protected-site.com")
         >>> ctx.close()  # Profile is saved; re-use path next run to restore state.
     """
-    from patchright.sync_api import sync_playwright
+    sync_playwright = _import_sync_playwright(_resolve_backend(backend))
 
     timezone = _migrate_timezone_id(timezone, kwargs)
 
@@ -297,6 +306,7 @@ async def launch_persistent_context_async(
     timezone: str | None = None,
     color_scheme: Literal["light", "dark", "no-preference"] | None = None,
     geoip: bool = False,
+    backend: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Async version of launch_persistent_context().
@@ -318,6 +328,7 @@ async def launch_persistent_context_async(
         timezone: IANA timezone (e.g. 'America/New_York').
         color_scheme: Color scheme preference — 'light', 'dark', or 'no-preference'.
         geoip: Auto-detect timezone/locale from proxy IP (default False).
+        backend: Playwright backend — 'playwright' (default) or 'patchright'.
         **kwargs: Passed directly to playwright.chromium.launch_persistent_context().
 
     Returns:
@@ -336,7 +347,7 @@ async def launch_persistent_context_async(
         >>>
         >>> asyncio.run(main())
     """
-    from patchright.async_api import async_playwright
+    async_playwright = _import_async_playwright(_resolve_backend(backend))
 
     timezone = _migrate_timezone_id(timezone, kwargs)
 
@@ -396,6 +407,7 @@ def launch_context(
     timezone: str | None = None,
     color_scheme: Literal["light", "dark", "no-preference"] | None = None,
     geoip: bool = False,
+    backend: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """Launch stealth browser and return a BrowserContext with common options pre-set.
@@ -414,8 +426,8 @@ def launch_context(
         timezone: IANA timezone (e.g. 'America/New_York').
         color_scheme: Color scheme preference — 'light', 'dark', or 'no-preference'.
             Default: None (uses Chromium default, which is 'light').
-            Note: 'no-preference' doesn't work in Patchright (falls back to 'light').
         geoip: Auto-detect timezone/locale from proxy IP (default False).
+        backend: Playwright backend — 'playwright' (default) or 'patchright'.
         **kwargs: Passed to browser.new_context().
 
     Returns:
@@ -430,7 +442,7 @@ def launch_context(
     # context and interferes with Playwright's timezone_id on new contexts.
     # Timezone is set via browser.new_context(timezone_id=...) below instead.
     browser = launch(headless=headless, proxy=proxy, args=args, stealth_args=stealth_args,
-                     timezone=None, locale=locale)
+                     timezone=None, locale=locale, backend=backend)
 
     context_kwargs: dict[str, Any] = {}
     if user_agent:
@@ -460,6 +472,47 @@ def launch_context(
     context.close = _close_context_with_cleanup
 
     return context
+
+
+# ---------------------------------------------------------------------------
+# Backend resolution
+# ---------------------------------------------------------------------------
+
+
+def _resolve_backend(backend: str | None) -> str:
+    """Resolve backend: param > env var > default ('playwright')."""
+    b = backend or os.environ.get("CLOAKBROWSER_BACKEND", "playwright")
+    if b not in ("playwright", "patchright"):
+        raise ValueError(f"Unknown backend '{b}'. Use 'playwright' or 'patchright'.")
+    return b
+
+
+def _import_sync_playwright(backend: str):
+    """Import sync_playwright from the resolved backend."""
+    if backend == "patchright":
+        try:
+            from patchright.sync_api import sync_playwright
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                "patchright is not installed. Install it with: pip install cloakbrowser[patchright]"
+            ) from None
+        return sync_playwright
+    from playwright.sync_api import sync_playwright
+    return sync_playwright
+
+
+def _import_async_playwright(backend: str):
+    """Import async_playwright from the resolved backend."""
+    if backend == "patchright":
+        try:
+            from patchright.async_api import async_playwright
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                "patchright is not installed. Install it with: pip install cloakbrowser[patchright]"
+            ) from None
+        return async_playwright
+    from playwright.async_api import async_playwright
+    return async_playwright
 
 
 # ---------------------------------------------------------------------------

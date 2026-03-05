@@ -125,7 +125,7 @@ See the full [CHANGELOG.md](CHANGELOG.md) for details.
 
 - **Config-level patches break** — `playwright-stealth`, `undetected-chromedriver`, and `puppeteer-extra` inject JavaScript or tweak flags. Every Chrome update breaks them. Antibot systems detect the patches themselves.
 - **CloakBrowser patches Chromium source code** — fingerprints are modified at the C++ level, compiled into the binary. Detection sites see a real browser because it *is* a real browser.
-- **Two layers of stealth** — C++ patches handle fingerprints (GPU, screen, UA, hardware reporting), while the Patchright driver defers Playwright's binding registration and randomizes internal world names. Most stealth tools only do one or the other.
+- **Source-level stealth** — C++ patches handle fingerprints (GPU, screen, UA, hardware reporting) at the binary level. No JavaScript injection, no config-level hacks. Most stealth tools only patch at the surface.
 - **Same behavior everywhere** — works identically local, in Docker, and on VPS. No environment-specific patches or config needed.
 - **Works with any browser automation framework** — tested and passing stealth checks with Playwright, Puppeteer, Selenium, undetected-chromedriver, browser-use, Crawl4AI, and agent-browser. Just point any Chromium-based framework at the binary path.
 
@@ -648,7 +648,7 @@ xattr -cr ~/.cloakbrowser/chromium-*/Chromium.app
 **"playwright install" vs CloakBrowser binary**
 You do NOT need `playwright install chromium`. CloakBrowser downloads its own binary. You only need Playwright's system deps:
 ```bash
-patchright install-deps chromium
+playwright install-deps chromium
 ```
 
 **macOS: Blocked on some sites that pass on Linux**
@@ -699,6 +699,7 @@ await new Promise(r => setTimeout(r, 3000));
 ```
 
 Other tips for maximizing reCAPTCHA scores:
+- **Try the Patchright backend** — suppresses CDP automation signals that reCAPTCHA Enterprise detects. Install with `pip install cloakbrowser[patchright]`, then use `launch(backend="patchright")` or set `CLOAKBROWSER_BACKEND=patchright` globally. Note: Patchright breaks proxy auth and `add_init_script` — only use it when you need the extra CDP stealth
 - **Use Playwright, not Puppeteer** — Puppeteer sends more CDP protocol traffic that reCAPTCHA detects ([details](#puppeteer))
 - **Use residential proxies** — datacenter IPs are flagged by IP reputation, not browser fingerprint
 - **Spend 15+ seconds on the page** before triggering reCAPTCHA — short visits score lower

@@ -6,6 +6,10 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ---
 
+## [0.3.9] — 2026-03-05
+
+- **[wrapper]** Default Playwright backend switched from `patchright` to stock `playwright`. Patchright broke proxy auth and `add_init_script` (#27) and is redundant since the binary handles stealth at C++ level. Opt in with `launch(backend="patchright")` or `CLOAKBROWSER_BACKEND=patchright` env var. Install: `pip install cloakbrowser[patchright]`
+
 ## [0.3.7] — 2026-03-05
 
 - **[wrapper]** Unify timezone parameter: rename `timezone_id` to `timezone` in `launch_context()`, `launch_persistent_context()`, and `launch_persistent_context_async()` (Python). Old `timezone_id` still works with a deprecation warning. JS: deprecate `timezoneId` on `LaunchContextOptions` — use `timezone` (inherited from `LaunchOptions`)

@@ -49,12 +49,13 @@ classifiers = [
     "Topic :: Software Development :: Testing",
 ]
 dependencies = [
-    "patchright>=1.40",
+    "playwright>=1.40",
     "httpx>=0.24",
 ]
 
 [project.optional-dependencies]
 geoip = ["geoip2>=4.0"]
+patchright = ["patchright>=1.40"]
 
 [project.urls]
 Homepage = "https://github.com/CloakHQ/CloakBrowser"
