@@ -9,6 +9,10 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 ## [0.3.7] — 2026-03-05
 
 - **[wrapper]** Unify timezone parameter: rename `timezone_id` to `timezone` in `launch_context()`, `launch_persistent_context()`, and `launch_persistent_context_async()` (Python). Old `timezone_id` still works with a deprecation warning. JS: deprecate `timezoneId` on `LaunchContextOptions` — use `timezone` (inherited from `LaunchOptions`)
+- **[wrapper]** Docker Hub image (`cloakhq/cloakbrowser`) — pre-built with Python + JS wrappers, Xvfb for headed mode, and `cloaktest` CLI shortcut. One-liner: `docker run --rm cloakhq/cloakbrowser cloaktest`
+- **[wrapper]** Add "Launching stealth browser..." feedback to all examples for better UX in Docker/CI
+- **[wrapper]** Comprehensive unit tests: 169 Python + 88 JS (up from 59 + 47)
+- **[docs]** Streamline READMEs for launch — reorder for conversion, collapse fingerprint flags, update Docker section
 
 ## [0.3.6] — 2026-03-04
 

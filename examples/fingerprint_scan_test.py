@@ -185,6 +185,7 @@ def main():
     print(f"Proxy: {PROXY or 'none'}")
     print()
 
+    print("Launching stealth browser...", flush=True)
     context = launch_context(
         headless=HEADLESS,
         proxy=PROXY,

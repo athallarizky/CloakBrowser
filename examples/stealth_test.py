@@ -53,21 +53,27 @@ def test_bot_sannysoft(page):
 def test_bot_incolumitas(page):
     """bot.incolumitas.com — comprehensive 30+ check bot detection."""
     page.goto("https://bot.incolumitas.com", wait_until="networkidle", timeout=30000)
-    time.sleep(12)  # needs time to run all detection tests
 
-    # Site outputs JSON blocks in page text, not HTML tables
-    results = page.evaluate("""() => {
-        const text = document.body.innerText;
-        const okMatches = text.match(/"\\w+":\\s*"OK"/g) || [];
-        const failMatches = text.match(/"\\w+":\\s*"FAIL"/g) || [];
-        const failedTests = failMatches.map(m => m.match(/"(\\w+)"/)[1]);
-        return {
-            passed: okMatches.length,
-            failed: failMatches.length,
-            failedTests,
-            total: okMatches.length + failMatches.length
-        };
-    }""")
+    # Poll until test count stabilizes (site runs tests progressively)
+    last_total = 0
+    for _ in range(15):
+        time.sleep(2)
+        results = page.evaluate("""() => {
+            const text = document.body.innerText;
+            const okMatches = text.match(/"\\w+":\\s*"OK"/g) || [];
+            const failMatches = text.match(/"\\w+":\\s*"FAIL"/g) || [];
+            const failedTests = failMatches.map(m => m.match(/"(\\w+)"/)[1]);
+            return {
+                passed: okMatches.length,
+                failed: failMatches.length,
+                failedTests,
+                total: okMatches.length + failMatches.length
+            };
+        }""")
+        if results["total"] >= 30 and results["total"] == last_total:
+            break
+        last_total = results["total"]
+
     return results
 
 
@@ -146,23 +152,18 @@ def test_recaptcha(page):
         wait_until="domcontentloaded",
         timeout=30000,
     )
-    # Wait for backend response (step3 element appears when score arrives)
-    try:
-        page.wait_for_selector("li.step3", timeout=20000)
-        time.sleep(1)
-    except Exception:
-        time.sleep(10)  # fallback
+    # Wait for score to appear (polls up to 30s)
+    for _ in range(15):
+        time.sleep(2)
+        score = page.evaluate("""() => {
+            const text = document.body.innerText;
+            const match = text.match(/"score":\\s*(\\d+\\.\\d+)/);
+            return match ? parseFloat(match[1]) : null;
+        }""")
+        if score is not None:
+            break
 
-    results = page.evaluate("""() => {
-        const text = document.body.innerText;
-        // Score appears in JSON response block: "score": 0.9
-        const scoreMatch = text.match(/"score":\\s*(\\d+\\.\\d+)/);
-        return {
-            score: scoreMatch ? parseFloat(scoreMatch[1]) : null,
-            pageText: text.substring(0, 500)
-        };
-    }""")
-    return results
+    return {"score": score}
 
 
 TESTS = [
@@ -179,8 +180,11 @@ TESTS = [
         "url": "https://bot.incolumitas.com",
         "runner": test_bot_incolumitas,
         "verdict": lambda r: f"{r['passed']}/{r['total']} passed"
-            + (f" (FAILED: {', '.join(r.get('failedTests', []))})" if r.get("failed", 0) > 0 else " — ALL GREEN"),
-        "pass": lambda r: r.get("failed", 0) <= 1,  # fpscanner.WEBDRIVER false positive expected (all builds)
+            + (" — ALL GREEN" if r.get("failed", 0) == 0
+               else f" (FAILED: {', '.join(r.get('failedTests', []))} — known false positives)"
+               if set(r.get("failedTests", [])) <= {"WEBDRIVER", "connectionRTT"}
+               else f" (FAILED: {', '.join(r.get('failedTests', []))})"),
+        "pass": lambda r: set(r.get("failedTests", [])) <= {"WEBDRIVER", "connectionRTT"},  # known false positives
     },
     {
         "name": "BrowserScan",
@@ -222,9 +226,53 @@ def main():
     print(f"Screenshots: {'on' if SCREENSHOTS else 'off'}")
     print(f"Proxy: {PROXY or 'none'}")
     print()
+    print("Launching stealth browser...", flush=True)
 
     browser = launch(headless=not HEADED, proxy=PROXY)
     page = browser.new_page()
+
+    # Show browser fingerprint details
+    try:
+        import re
+        info = page.evaluate("""async () => {
+            const ua = navigator.userAgent;
+            let fullVersion = null;
+            try {
+                const data = await navigator.userAgentData.getHighEntropyValues(['fullVersionList', 'platform', 'platformVersion']);
+                const chrome = data.fullVersionList.find(b => b.brand === 'Chromium' || b.brand === 'Google Chrome');
+                fullVersion = chrome ? chrome.version : null;
+            } catch {}
+            const gl = document.createElement('canvas').getContext('webgl');
+            const dbg = gl ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+            return {
+                ua,
+                fullVersion,
+                platform: navigator.platform,
+                cores: navigator.hardwareConcurrency,
+                gpu: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'N/A',
+                gpuVendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : 'N/A',
+                screen: screen.width + 'x' + screen.height,
+                languages: navigator.languages.join(', '),
+            };
+        }""")
+        # Condensed UA
+        ua_short = re.sub(r'^Mozilla/5\.0 \(', '', info["ua"])
+        ua_short = re.sub(r'\) AppleWebKit/[\d.]+ \(KHTML, like Gecko\) ', ' | ', ua_short)
+        print(f"UA: {ua_short}", flush=True)
+        print(f"Platform: {info['platform']} | Cores: {info['cores']} | Screen: {info['screen']}", flush=True)
+        print(f"GPU: {info['gpuVendor']} — {info['gpu']}", flush=True)
+    except Exception:
+        print("Chrome: could not detect", flush=True)
+
+    # Show IP address
+    try:
+        page.goto("https://httpbin.org/ip", timeout=10000)
+        ip = page.evaluate("JSON.parse(document.body.innerText).origin")
+        print(f"IP: {ip}", flush=True)
+    except Exception:
+        print("IP: could not detect", flush=True)
+
+    print(f"Running {len(TESTS)} tests (this takes ~2 minutes)...\n", flush=True)
 
     results_summary = []
 

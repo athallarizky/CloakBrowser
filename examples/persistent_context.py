@@ -6,6 +6,7 @@ PROFILE_DIR = "./my-profile"
 
 # Session 1 — set some state
 print("=== Session 1: Setting state ===")
+print("Launching stealth browser...", flush=True)
 ctx = launch_persistent_context(PROFILE_DIR, headless=False)
 page = ctx.new_page()
 page.goto("https://example.com")
@@ -18,6 +19,7 @@ ctx.close()
 
 # Session 2 — state is restored
 print("\n=== Session 2: Verifying persistence ===")
+print("Launching stealth browser...", flush=True)
 ctx = launch_persistent_context(PROFILE_DIR, headless=False)
 page = ctx.new_page()
 page.goto("https://example.com")

@@ -9,6 +9,7 @@ import time
 
 from cloakbrowser import launch
 
+print("Launching stealth browser...", flush=True)
 browser = launch(headless=True)
 page = browser.new_page()
 

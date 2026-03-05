@@ -2,6 +2,7 @@
 
 from cloakbrowser import launch
 
+print("Launching stealth browser...", flush=True)
 browser = launch(headless=False)
 page = browser.new_page()
 

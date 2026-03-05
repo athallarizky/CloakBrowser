@@ -5,10 +5,10 @@
 <p align="center">
 <a href="https://pypi.org/project/cloakbrowser/"><img src="https://img.shields.io/pypi/v/cloakbrowser" alt="PyPI"></a>
 <a href="https://www.npmjs.com/package/cloakbrowser"><img src="https://img.shields.io/npm/v/cloakbrowser" alt="npm"></a>
-<a href="LICENSE"><img src="https://img.shields.io/github/license/CloakHQ/CloakBrowser" alt="License"></a>
-<a href="https://github.com/CloakHQ/CloakBrowser"><img src="https://img.shields.io/github/last-commit/CloakHQ/CloakBrowser" alt="Last Commit"></a>
+<a href="LICENSE"><img src="https://img.shields.io/github/license/cloakhq/cloakbrowser?v=1" alt="License"></a>
+<a href="https://github.com/CloakHQ/CloakBrowser"><img src="https://img.shields.io/github/last-commit/cloakhq/cloakbrowser" alt="Last Commit"></a>
 <br>
-<a href="https://github.com/CloakHQ/CloakBrowser"><img src="https://img.shields.io/github/stars/CloakHQ/CloakBrowser" alt="Stars"></a>
+<a href="https://github.com/CloakHQ/CloakBrowser"><img src="https://img.shields.io/github/stars/cloakhq/cloakbrowser" alt="Stars"></a>
 <a href="https://pepy.tech/projects/cloakbrowser"><img src="https://img.shields.io/pepy/dt/cloakbrowser?label=pypi&logo=pypi&logoColor=white" alt="PyPI Downloads"></a>
 <a href="https://www.npmjs.com/package/cloakbrowser"><img src="https://img.shields.io/npm/dt/cloakbrowser?label=npm&logo=npm&logoColor=white" alt="npm Downloads"></a>
 </p>
@@ -41,6 +41,11 @@ Same API, same code — just swap the import. <strong>3 lines of code, 30 second
 - **Auto-updating binary** — background update checks, always on the latest stealth build
 - **`pip install cloakbrowser`** or **`npm install cloakbrowser`** — binary auto-downloads, zero config
 - **Free and open source** — no subscriptions, no usage limits
+
+**Try it now** — no install needed:
+```bash
+docker run --rm cloakhq/cloakbrowser cloaktest
+```
 
 **Python:**
 ```python
@@ -413,9 +418,6 @@ The binary detects its platform at compile time — a macOS binary reports as ma
 > const browser = await launch({ args: ['--fingerprint=12345'] });
 > ```
 
-<details>
-<summary><strong>Default Fingerprint & All Flags</strong> (click to expand)</summary>
-
 ### Default Fingerprint
 
 Every `launch()` call sets these automatically. The **wrapper** applies platform-aware defaults — on Linux it spoofs as Windows for a more common fingerprint, on macOS it runs as a native Mac browser:
@@ -475,8 +477,6 @@ browser = launch(args=[
 ])
 ```
 
-</details>
-
 ## Examples
 
 **Python** — see [`examples/`](examples/):
@@ -506,30 +506,24 @@ The wrapper auto-downloads the correct binary for your platform.
 
 ## Docker
 
-A ready-to-use [`Dockerfile`](Dockerfile) is included. It installs system deps, the package, and pre-downloads the stealth binary during build:
+Pre-built image on Docker Hub — no install, no setup:
 
 ```bash
-docker build -t cloakbrowser .
-docker run --rm cloakbrowser python examples/basic.py
-```
+# Run the stealth test suite
+docker run --rm cloakhq/cloakbrowser cloaktest
 
-The key steps in the Dockerfile:
-1. **System deps** — Chromium requires ~15 shared libraries (`libnss3`, `libgbm1`, etc.)
-2. **`pip install .`** — installs CloakBrowser + Playwright
-3. **`ensure_binary()`** — downloads the stealth Chromium binary at build time (~200MB), so containers start instantly
+# Run your own script
+docker run --rm cloakhq/cloakbrowser python -c "
+from cloakbrowser import launch
+browser = launch()
+page = browser.new_page()
+page.goto('https://example.com')
+print(page.title())
+browser.close()
+"
 
-To extend with your own script, just add a `COPY` + `CMD`:
-
-```dockerfile
-FROM cloakbrowser
-COPY your_script.py /app/
-CMD ["python", "your_script.py"]
-```
-
-**With a proxy** (the most common production setup):
-
-```bash
-docker run --rm cloakbrowser python -c "
+# With a proxy
+docker run --rm cloakhq/cloakbrowser python -c "
 from cloakbrowser import launch
 browser = launch(proxy='http://user:pass@proxy:8080')
 page = browser.new_page()
@@ -537,6 +531,20 @@ page.goto('https://example.com')
 print(page.title())
 browser.close()
 "
+```
+
+To extend with your own script:
+
+```dockerfile
+FROM cloakhq/cloakbrowser
+COPY your_script.py /app/
+CMD ["python", "your_script.py"]
+```
+
+**Building from source** — a [`Dockerfile`](Dockerfile) is also included if you prefer to build your own image:
+
+```bash
+docker build -t cloakbrowser .
 ```
 
 CloakBrowser works identically local, in Docker, and on VPS. No environment-specific config needed.
@@ -584,11 +592,12 @@ const browser = await launch({ args: ['--disable-http2'] });
 
 Only use this flag for sites that require it — most sites work fine with HTTP/2.
 
-**Something not working? Make sure you're on the latest wrapper**
+**Something not working? Make sure you're on the latest version**
 Older versions may use outdated stealth args or download an older binary:
 ```bash
 pip install -U cloakbrowser    # Python
 npm install cloakbrowser@latest # JavaScript
+docker pull cloakhq/cloakbrowser:latest  # Docker
 ```
 
 **Binary download fails / timeout**
