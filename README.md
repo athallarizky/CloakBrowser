@@ -177,6 +177,11 @@ All tests verified against live detection services. Last tested: Mar 2026 (Chrom
 <br><em>FingerprintJS web-scraping demo — data served, not blocked</em>
 </p>
 
+<p align="center">
+<img src="https://i.imgur.com/srCcFtK.png" width="600" alt="deviceandbrowserinfo.com — You are human!">
+<br><em>deviceandbrowserinfo.com behavioral bot detection — "You are human!" with humanize=True (24/24 signals passed)</em>
+</p>
+
 ## Comparison
 
 | Feature | Playwright | playwright-stealth | undetected-chromedriver | Camoufox | CloakBrowser |
