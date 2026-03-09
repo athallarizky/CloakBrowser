@@ -11,6 +11,7 @@
 <a href="https://github.com/CloakHQ/CloakBrowser"><img src="https://img.shields.io/github/stars/cloakhq/cloakbrowser" alt="Stars"></a>
 <a href="https://pypi.org/project/cloakbrowser/"><img src="https://img.shields.io/pepy/dt/cloakbrowser?label=pypi&logo=pypi&logoColor=white" alt="PyPI Downloads"></a>
 <a href="https://www.npmjs.com/package/cloakbrowser"><img src="https://img.shields.io/npm/dt/cloakbrowser?label=npm&logo=npm&logoColor=white" alt="npm Downloads"></a>
+<a href="https://hub.docker.com/r/cloakhq/cloakbrowser"><img src="https://img.shields.io/docker/pulls/cloakhq/cloakbrowser?label=docker&logo=docker&logoColor=white" alt="Docker Pulls"></a>
 </p>
 
 <br>
@@ -129,7 +130,7 @@ See the full [CHANGELOG.md](CHANGELOG.md) for details.
 - **CloakBrowser patches Chromium source code** — fingerprints are modified at the C++ level, compiled into the binary. Detection sites see a real browser because it *is* a real browser.
 - **Source-level stealth** — C++ patches handle fingerprints (GPU, screen, UA, hardware reporting) at the binary level. No JavaScript injection, no config-level hacks. Most stealth tools only patch at the surface.
 - **Same behavior everywhere** — works identically local, in Docker, and on VPS. No environment-specific patches or config needed.
-- **Works with any browser automation framework** — tested and passing stealth checks with Playwright, Puppeteer, Selenium, undetected-chromedriver, browser-use, Crawl4AI, and agent-browser. Just point any Chromium-based framework at the binary path.
+- **Works with AI agents and automation frameworks** — drop-in stealth for browser-use, Crawl4AI, agent-browser, Claude computer use, and OpenAI Operator. Also tested with Playwright, Puppeteer, and Selenium — point any Chromium-based framework at the binary path.
 
 CloakBrowser doesn't solve CAPTCHAs — it prevents them from appearing. No CAPTCHA-solving services, no proxy rotation built in — bring your own proxies, use the Playwright API you already know.
 

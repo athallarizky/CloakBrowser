@@ -585,6 +585,11 @@ def _import_async_playwright(backend: str):
 # ---------------------------------------------------------------------------
 
 
+def _ensure_proxy_scheme(proxy_url: str) -> str:
+    """Prepend http:// to schemeless proxy URLs so parsers can extract hostname."""
+    return proxy_url if "://" in proxy_url else f"http://{proxy_url}"
+
+
 def _maybe_resolve_geoip(
     geoip: bool,
     proxy: str | ProxySettings | None,
@@ -600,6 +605,7 @@ def _maybe_resolve_geoip(
     proxy_url = proxy.get("server") if isinstance(proxy, dict) else proxy
     if not proxy_url:
         return timezone, locale
+    proxy_url = _ensure_proxy_scheme(proxy_url)
     geo_tz, geo_locale = resolve_proxy_geo(proxy_url)
     if timezone is None:
         timezone = geo_tz
@@ -653,12 +659,18 @@ def _parse_proxy_url(proxy: str) -> dict[str, Any]:
     """Parse proxy URL, extracting credentials into separate Playwright fields.
 
     Handles: http://user:pass@host:port -> {server: "http://host:port", username: "user", password: "pass"}
-    Also handles: no credentials, URL-encoded special chars, socks5://, missing port.
+    Also handles: no credentials, URL-encoded special chars, socks5://, missing port,
+    and bare proxy strings without a scheme (e.g. 'user:pass@host:port' -> treated as http).
     """
-    parsed = urlparse(proxy)
+    # Bare format: "user:pass@host:port" — urlparse needs a scheme to extract credentials.
+    normalized = proxy
+    if "@" in proxy and "://" not in proxy:
+        normalized = f"http://{proxy}"
+
+    parsed = urlparse(normalized)
 
     if not parsed.username:
-        return {"server": proxy}
+        return {"server": proxy}  # no creds — return original unchanged
 
     # Rebuild server URL without credentials
     netloc = parsed.hostname or ""
