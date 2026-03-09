@@ -222,7 +222,7 @@ export function getDefaultStealthArgs(): string[] {
   return [
     ...base,
     "--fingerprint-platform=windows",
-    "--fingerprint-gpu-vendor=NVIDIA Corporation",
-    "--fingerprint-gpu-renderer=NVIDIA GeForce RTX 3070",
+    "--fingerprint-gpu-vendor=Google Inc. (NVIDIA)",
+    "--fingerprint-gpu-renderer=ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)",
   ];
 }
