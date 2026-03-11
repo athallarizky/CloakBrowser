@@ -6,6 +6,13 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ---
 
+## [0.3.14] — 2026-03-12
+
+- **[binary]** Upgrade Linux build to 145.0.7632.159.6 — fix persistent context detection by FingerprintJS
+- **[binary]** Storage quota normalization for persistent context profiles
+- **[binary]** Fix outerHeight calculation for non-incognito contexts
+- **[wrapper]** Add CLI for binary management — `python -m cloakbrowser install` / `npx cloakbrowser install` with visible download progress (closes #43)
+
 ## [0.3.13] — 2026-03-10
 
 - **[wrapper]** Suppress Playwright's `--enable-unsafe-swiftshader` default arg — eliminates SwiftShader software renderer detection signal, letting the binary's GPU spoofing work cleanly
