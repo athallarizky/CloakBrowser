@@ -110,6 +110,20 @@ page.goto("https://example.com")
 
 > ⭐ **Star** to show support — **[Watch releases](https://github.com/CloakHQ/CloakBrowser/subscription)** to get notified when new builds drop.
 
+## Browser Profile Manager
+
+Self-hosted alternative to Multilogin, GoLogin, and AdsPower. Create browser profiles with unique fingerprints, proxies, and persistent sessions. Launch and interact with them in your browser via noVNC.
+
+```bash
+docker run -p 8080:8080 -v cloakprofiles:/data cloakhq/cloakbrowser-manager
+```
+
+Open [http://localhost:8080](http://localhost:8080). Create a profile. Click **Launch**. Done.
+
+→ **[CloakBrowser Manager](https://github.com/CloakHQ/CloakBrowser-Manager)** — free, open source (MIT)
+
+---
+
 ## Latest: v0.3.14 (Chromium 145.0.7632.159.6)
 
 - **`humanize=True`** — one flag makes all mouse, keyboard, and scroll interactions behave like a real user. Bézier curves, per-character typing, realistic scroll patterns. Two presets: `default` and `careful`
