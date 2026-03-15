@@ -146,14 +146,14 @@ export async function checkForUpdate(): Promise<string | null> {
 function showWelcome(): void {
   const marker = path.join(getCacheDir(), ".welcome_shown");
   if (fs.existsSync(marker)) return;
-  console.log();
-  console.log("  CloakBrowser — stealth Chromium for automation");
-  console.log("  https://github.com/CloakHQ/CloakBrowser");
-  console.log();
-  console.log("  Issues?  https://github.com/CloakHQ/CloakBrowser/issues");
-  console.log("  Donate?  https://ko-fi.com/cloakhq");
-  console.log("  Star us if CloakBrowser helps your project!");
-  console.log();
+  console.error();
+  console.error("  CloakBrowser — stealth Chromium for automation");
+  console.error("  https://github.com/CloakHQ/CloakBrowser");
+  console.error();
+  console.error("  Issues?  https://github.com/CloakHQ/CloakBrowser/issues");
+  console.error("  Donate?  https://ko-fi.com/cloakhq");
+  console.error("  Star us if CloakBrowser helps your project!");
+  console.error();
   try {
     fs.mkdirSync(getCacheDir(), { recursive: true });
     fs.writeFileSync(marker, "");

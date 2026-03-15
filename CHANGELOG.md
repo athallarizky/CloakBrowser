@@ -6,6 +6,13 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ---
 
+## [0.3.18] — 2026-03-15
+
+- **[wrapper]** Fix welcome banner printing to stdout — now writes to stderr so it won't corrupt JSON output in programmatic usage (fixes #59)
+- **[wrapper]** Fix `cloakserve` Docker WebGL by adding `--ignore-gpu-blocklist` flag
+- **[docs]** Add Crawlee integration example
+- **[meta]** Add GitHub issue template for bug reports
+
 ## [0.3.17] — 2026-03-15
 
 - **[binary]** Windows x64 build upgraded to 145.0.7632.159.7 — 33 source-level C++ patches, matching Linux

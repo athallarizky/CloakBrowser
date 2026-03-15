@@ -12,6 +12,7 @@ import os
 import platform
 import stat
 import subprocess
+import sys
 import tarfile
 import tempfile
 import threading
@@ -55,14 +56,14 @@ def _show_welcome() -> None:
     marker = get_cache_dir() / ".welcome_shown"
     if marker.exists():
         return
-    print()
-    print("  CloakBrowser — stealth Chromium for automation")
-    print("  https://github.com/CloakHQ/CloakBrowser")
-    print()
-    print("  Issues?  https://github.com/CloakHQ/CloakBrowser/issues")
-    print("  Donate?  https://ko-fi.com/cloakhq")
-    print("  Star us if CloakBrowser helps your project!")
-    print()
+    sys.stderr.write("\n")
+    sys.stderr.write("  CloakBrowser — stealth Chromium for automation\n")
+    sys.stderr.write("  https://github.com/CloakHQ/CloakBrowser\n")
+    sys.stderr.write("\n")
+    sys.stderr.write("  Issues?  https://github.com/CloakHQ/CloakBrowser/issues\n")
+    sys.stderr.write("  Donate?  https://ko-fi.com/cloakhq\n")
+    sys.stderr.write("  Star us if CloakBrowser helps your project!\n")
+    sys.stderr.write("\n")
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.write_text("")
