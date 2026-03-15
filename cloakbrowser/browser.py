@@ -102,7 +102,7 @@ def launch(
 
     binary_path = ensure_binary()
     timezone, locale = _maybe_resolve_geoip(geoip, proxy, timezone, locale)
-    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale)
+    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale, headless=headless)
 
     logger.debug("Launching stealth Chromium (headless=%s, args=%d)", headless, len(chrome_args))
 
@@ -185,7 +185,7 @@ async def launch_async(  # noqa: C901
 
     binary_path = ensure_binary()
     timezone, locale = _maybe_resolve_geoip(geoip, proxy, timezone, locale)
-    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale)
+    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale, headless=headless)
 
     logger.debug("Launching stealth Chromium async (headless=%s, args=%d)", headless, len(chrome_args))
 
@@ -281,7 +281,7 @@ def launch_persistent_context(
 
     binary_path = ensure_binary()
     timezone, locale = _maybe_resolve_geoip(geoip, proxy, timezone, locale)
-    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale)
+    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale, headless=headless)
 
     logger.debug(
         "Launching persistent stealth Chromium (headless=%s, user_data_dir=%s)",
@@ -394,7 +394,7 @@ async def launch_persistent_context_async(
 
     binary_path = ensure_binary()
     timezone, locale = _maybe_resolve_geoip(geoip, proxy, timezone, locale)
-    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale)
+    chrome_args = _build_args(stealth_args, args, timezone=timezone, locale=locale, headless=headless)
 
     logger.debug(
         "Launching persistent stealth Chromium async (headless=%s, user_data_dir=%s)",
@@ -609,6 +609,7 @@ def _build_args(
     extra_args: list[str] | None,
     timezone: str | None = None,
     locale: str | None = None,
+    headless: bool = True,
 ) -> list[str]:
     """Combine stealth args with user-provided args and locale flags.
 
@@ -620,6 +621,16 @@ def _build_args(
     if stealth_args:
         for arg in get_default_stealth_args():
             seen[arg.split("=", 1)[0]] = arg
+
+    # GPU blocklist bypass:
+    # - Headed mode (all platforms): Chromium blocks WebGL on software GPUs
+    #   in Docker/Xvfb. Flag lets SwiftShader serve WebGL. See issue #56.
+    # - Windows (all modes): Chromium's GPU blocklist blocks WebGPU for the
+    #   Microsoft Basic Render Driver. Dawn's adapter_blocklist bypass alone
+    #   isn't enough — need this flag too. Linux doesn't need it.
+    import platform as _platform
+    if not headless or _platform.system() == "Windows":
+        seen["--ignore-gpu-blocklist"] = "--ignore-gpu-blocklist"
 
     if extra_args:
         for arg in extra_args:

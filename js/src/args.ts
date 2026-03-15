@@ -20,6 +20,15 @@ export function buildArgs(options: LaunchOptions): string[] {
       seen.set(arg.split("=")[0], arg);
     }
   }
+  // GPU blocklist bypass:
+  // - Headed mode (all platforms): Chromium blocks WebGL on software GPUs
+  //   in Docker/Xvfb. Flag lets SwiftShader serve WebGL. See issue #56.
+  // - Windows (all modes): Chromium's GPU blocklist blocks WebGPU for the
+  //   Microsoft Basic Render Driver. Dawn's adapter_blocklist bypass alone
+  //   isn't enough. Linux doesn't need it.
+  if (options.headless === false || process.platform === "win32") {
+    seen.set("--ignore-gpu-blocklist", "--ignore-gpu-blocklist");
+  }
   if (options.args) {
     for (const arg of options.args) {
       const key = arg.split("=")[0];
