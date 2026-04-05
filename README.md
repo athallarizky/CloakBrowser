@@ -40,7 +40,7 @@ Drop-in Playwright/Puppeteer replacement for Python and JavaScript.<br>
 Same API, same code — just swap the import. <strong>3 lines of code, 30 seconds to unblock.</strong>
 </p>
 
-- **42 source-level C++ patches** — canvas, WebGL, audio, fonts, GPU, screen, automation signals, CDP input behavior
+- **48 source-level C++ patches** — canvas, WebGL, audio, fonts, GPU, screen, WebRTC, network timing, automation signals, CDP input behavior
 - **`humanize=True`** — human-like mouse curves, keyboard timing, and scroll patterns. One flag, behavioral detection passes
 - **0.9 reCAPTCHA v3 score** — human-level, server-verified
 - **Passes Cloudflare Turnstile**, FingerprintJS, BrowserScan — tested against 30+ detection sites
@@ -128,16 +128,16 @@ Open [http://localhost:8080](http://localhost:8080). Create a profile. Click **L
 
 ---
 
-## Latest: v0.3.19 (Chromium 145.0.7632.159.8)
+## Latest: v0.3.20 (Chromium 145.0.7632.159.9)
 
-- **`humanize=True`** — one flag makes all mouse, keyboard, and scroll interactions behave like a real user. Bézier curves, per-character typing, realistic scroll patterns. Two presets: `default` and `careful`
-- **CDP input behavior mimicking** — input events sent via CDP now produce the same signals as real user interactions. 4 source-level patches covering pointer, keyboard, and mouse behavior
-- **Native locale spoofing** — new C++ patch replaces detectable CDP-level locale emulation
-- **WebGPU fingerprint hardening** — adapter features, limits, and device ID spoofed for cross-API consistency
-- **42 fingerprint patches** (Linux x64) — all 4 platforms on Chromium 145
+- **48 fingerprint patches** (Linux x64) — 6 new patches covering WebRTC IP spoofing, proxy signal removal, and network timing normalization
+- **WebRTC IP spoofing** — `--fingerprint-webrtc-ip=auto` resolves your proxy's exit IP and spoofs WebRTC ICE candidates. Auto-injected when using `geoip=True` (no extra network call)
+- **Proxy signal removal** — DNS/connect/SSL timing zeroed, proxy cache headers stripped, Proxy-Connection header leak removed
+- **`cloakserve` CDP multiplexer** — rewritten as a multi-connection CDP proxy with per-connection fingerprint seeds
+- **Humanize CDP isolation** — keyboard events now use isolated worlds and trusted dispatch for better behavioral stealth
+- **`humanize=True`** — one flag makes all mouse, keyboard, and scroll interactions behave like a real user. Bézier curves, per-character typing, realistic scroll patterns
 - **Stealthy with zero flags** — binary auto-generates a random fingerprint seed at startup. No configuration required
 - **Timezone & locale from proxy IP** — `launch(proxy="...", geoip=True)` auto-detects timezone and locale
-- **WebRTC IP spoofing** — `--fingerprint-webrtc-ip=auto` resolves your proxy's exit IP and spoofs WebRTC ICE candidates. Auto-injected when using `geoip=True` (no extra network call)
 - **Persistent profiles** — `launch_persistent_context()` keeps cookies and localStorage across sessions, bypasses incognito detection
 
 See the full [CHANGELOG.md](CHANGELOG.md) for details.
@@ -222,7 +222,7 @@ CloakBrowser is a thin wrapper (Python + JavaScript) around a custom-built Chrom
 3. **Every launch** → Playwright or Puppeteer starts with our binary + stealth args
 4. **You write code** → standard Playwright/Puppeteer API, nothing new to learn
 
-The binary includes 42 source-level patches covering canvas, WebGL, audio, fonts, GPU, screen properties, hardware reporting, automation signal removal, and CDP input behavior mimicking.
+The binary includes 48 source-level patches covering canvas, WebGL, audio, fonts, GPU, screen properties, WebRTC, network timing, hardware reporting, automation signal removal, and CDP input behavior mimicking.
 
 These are compiled into the Chromium binary — not injected via JavaScript, not set via flags.
 
@@ -1019,7 +1019,7 @@ A: Yes. Pass `proxy="http://user:pass@host:port"` to `launch()`.
 
 | Feature | Status |
 |---------|--------|
-| Linux x64 — Chromium 145 (42 patches) | ✅ Released |
+| Linux x64 — Chromium 145 (48 patches) | ✅ Released |
 | macOS arm64/x64 — Chromium 145 (26 patches) | ✅ Released |
 | Windows x64 — Chromium 145 (33 patches) | ✅ Released |
 | JavaScript/Puppeteer + Playwright support | ✅ Released |
@@ -1043,7 +1043,7 @@ All releases are signed for supply chain verification.
 ```bash
 # Verify GPG signature (binary release tag)
 gpg --keyserver keyserver.ubuntu.com --recv-keys C60C0DDC9D0DE2DD
-git verify-tag chromium-v145.0.7632.159.8
+git verify-tag chromium-v145.0.7632.159.9
 
 # Verify GitHub binary attestation (Sigstore)
 gh attestation verify cloakbrowser-linux-x64.tar.gz --repo CloakHQ/cloakbrowser

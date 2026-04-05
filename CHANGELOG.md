@@ -6,6 +6,18 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ---
 
+## [0.3.20] — 2026-04-06
+
+- **[binary]** Upgrade Linux x64 build to 145.0.7632.159.9 — 48 source-level C++ patches (up from 42)
+- **[binary]** 6 new patches: WebRTC IP spoofing, proxy signal removal, network timing normalization, WebGL accuracy improvements
+- **[binary]** New `--fingerprint-webrtc-ip` flag — spoof WebRTC ICE candidate IPs to match your proxy exit IP
+- **[binary]** Proxy detection signals eliminated — timing, headers, and network metadata normalized when proxy is active
+- **[binary]** WebGL rendering accuracy improvements for headed mode
+- **[wrapper]** Auto-inject `--fingerprint-webrtc-ip` when `geoip=True` — uses resolved exit IP from GeoIP lookup
+- **[wrapper]** Rewrite `cloakserve` as CDP multiplexer with per-connection fingerprint seeds and connection tracking
+- **[wrapper]** Humanize keyboard improvements — better behavioral stealth for typing interactions (thanks [@evelaa123](https://github.com/evelaa123))
+- **[meta]** Bump GitHub Actions dependencies
+
 ## [0.3.19] — 2026-03-30
 
 - **[binary]** Upgrade Linux x64 build to 145.0.7632.159.8 — 42 source-level C++ patches (up from 33)
