@@ -24,6 +24,9 @@ from .download import ensure_binary
 
 logger = logging.getLogger("cloakbrowser")
 
+# Sentinel to distinguish "viewport not provided" from "viewport=None" (disable emulation)
+_VIEWPORT_UNSET = object()
+
 
 def _resolve_timezone(timezone: str | None, kwargs: dict[str, Any]) -> str | None:
     """Accept both timezone and timezone_id — either works, no warning."""
@@ -237,7 +240,7 @@ def launch_persistent_context(
     args: list[str] | None = None,
     stealth_args: bool = True,
     user_agent: str | None = None,
-    viewport: dict | None = None,
+    viewport: dict | None = _VIEWPORT_UNSET,
     locale: str | None = None,
     timezone: str | None = None,
     color_scheme: Literal["light", "dark", "no-preference"] | None = None,
@@ -264,6 +267,7 @@ def launch_persistent_context(
         stealth_args: Include default stealth fingerprint args (default True).
         user_agent: Custom user agent string.
         viewport: Viewport size dict, e.g. {"width": 1920, "height": 1080}.
+            Pass None to disable viewport emulation (use OS window size).
         locale: Browser locale, e.g. "en-US".
         timezone: IANA timezone (e.g. 'America/New_York').
         color_scheme: Color scheme preference — 'light', 'dark', or 'no-preference'.
@@ -310,7 +314,12 @@ def launch_persistent_context(
     context_kwargs: dict[str, Any] = {}
     if user_agent:
         context_kwargs["user_agent"] = user_agent
-    context_kwargs["viewport"] = viewport or DEFAULT_VIEWPORT
+    if viewport is _VIEWPORT_UNSET:
+        context_kwargs["viewport"] = DEFAULT_VIEWPORT
+    elif viewport is None:
+        context_kwargs["no_viewport"] = True
+    else:
+        context_kwargs["viewport"] = viewport
     if color_scheme:
         context_kwargs["color_scheme"] = color_scheme
     context_kwargs.update(kwargs)
@@ -354,7 +363,7 @@ async def launch_persistent_context_async(
     args: list[str] | None = None,
     stealth_args: bool = True,
     user_agent: str | None = None,
-    viewport: dict | None = None,
+    viewport: dict | None = _VIEWPORT_UNSET,
     locale: str | None = None,
     timezone: str | None = None,
     color_scheme: Literal["light", "dark", "no-preference"] | None = None,
@@ -380,6 +389,7 @@ async def launch_persistent_context_async(
         stealth_args: Include default stealth fingerprint args (default True).
         user_agent: Custom user agent string.
         viewport: Viewport size dict, e.g. {"width": 1920, "height": 1080}.
+            Pass None to disable viewport emulation (use OS window size).
         locale: Browser locale, e.g. "en-US".
         timezone: IANA timezone (e.g. 'America/New_York').
         color_scheme: Color scheme preference — 'light', 'dark', or 'no-preference'.
@@ -429,7 +439,12 @@ async def launch_persistent_context_async(
     context_kwargs: dict[str, Any] = {}
     if user_agent:
         context_kwargs["user_agent"] = user_agent
-    context_kwargs["viewport"] = viewport or DEFAULT_VIEWPORT
+    if viewport is _VIEWPORT_UNSET:
+        context_kwargs["viewport"] = DEFAULT_VIEWPORT
+    elif viewport is None:
+        context_kwargs["no_viewport"] = True
+    else:
+        context_kwargs["viewport"] = viewport
     if color_scheme:
         context_kwargs["color_scheme"] = color_scheme
     context_kwargs.update(kwargs)
@@ -472,7 +487,7 @@ def launch_context(
     args: list[str] | None = None,
     stealth_args: bool = True,
     user_agent: str | None = None,
-    viewport: dict | None = None,
+    viewport: dict | None = _VIEWPORT_UNSET,
     locale: str | None = None,
     timezone: str | None = None,
     color_scheme: Literal["light", "dark", "no-preference"] | None = None,
@@ -495,6 +510,7 @@ def launch_context(
         stealth_args: Include default stealth fingerprint args (default True).
         user_agent: Custom user agent string.
         viewport: Viewport size dict, e.g. {"width": 1920, "height": 1080}.
+            Pass None to disable viewport emulation (use OS window size).
         locale: Browser locale, e.g. "en-US".
         timezone: IANA timezone (e.g. 'America/New_York').
         color_scheme: Color scheme preference — 'light', 'dark', or 'no-preference'.
@@ -527,7 +543,12 @@ def launch_context(
     context_kwargs: dict[str, Any] = {}
     if user_agent:
         context_kwargs["user_agent"] = user_agent
-    context_kwargs["viewport"] = viewport or DEFAULT_VIEWPORT
+    if viewport is _VIEWPORT_UNSET:
+        context_kwargs["viewport"] = DEFAULT_VIEWPORT
+    elif viewport is None:
+        context_kwargs["no_viewport"] = True
+    else:
+        context_kwargs["viewport"] = viewport
     if color_scheme:
         context_kwargs["color_scheme"] = color_scheme
     context_kwargs.update(kwargs)
