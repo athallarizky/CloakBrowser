@@ -452,7 +452,7 @@ clearCache();
 
 ## Human Behavior
 
-Pass `humanize=True` to make all mouse, keyboard, and scroll interactions indistinguishable from real users. All Playwright calls — `page.click()`, `page.fill()`, `page.type()`, `page.mouse.*`, `page.keyboard.*`, and the full Locator API — are automatically replaced with human-like equivalents. No code changes needed.
+Pass `humanize=True` to make all mouse, keyboard, and scroll interactions indistinguishable from real users. All Playwright calls (`page.click()`, `page.fill()`, `page.type()`, `page.mouse.*`, `page.keyboard.*`, Locator API) and Puppeteer calls (`page.click()`, `page.type()`, `page.mouse.*`, `page.keyboard.*`, ElementHandle API) are automatically replaced with human-like equivalents. No code changes needed.
 
 ```python
 browser = launch(humanize=True)
@@ -463,6 +463,14 @@ page.locator("button[type=submit]").click()       # Bézier curve, realistic aim
 ```
 
 ```javascript
+// Playwright
+import { launch } from 'cloakbrowser';
+const browser = await launch({ humanize: true });
+```
+
+```javascript
+// Puppeteer
+import { launch } from 'cloakbrowser/puppeteer';
 const browser = await launch({ humanize: true });
 ```
 
@@ -511,9 +519,11 @@ const browser = await launch({
 
 Access the original un-patched Playwright page at `page._original` if you need raw speed for a specific call.
 
-> **Note:** Always use `page.click(selector)`, `page.type(selector, text)`, `page.hover(selector)`, or `page.locator(selector).*` — these go through the full humanize pipeline. Avoid `page.query_selector()` — `ElementHandle` objects bypass all patches, so mouse movement teleports, keyboard events fire without timing, and scroll has no human curve.
+> **Note (Playwright):** Always use `page.click(selector)`, `page.type(selector, text)`, `page.hover(selector)`, or `page.locator(selector).*` — these go through the full humanize pipeline. Avoid `page.query_selector()` — `ElementHandle` objects bypass all patches, so mouse movement teleports, keyboard events fire without timing, and scroll has no human curve.
+>
+> **Note (Puppeteer):** Both selector-based methods (`page.click()`, `page.type()`) and ElementHandle methods (`el.click()`, `el.type()`) are fully humanized. `page.$()`, `page.$$()`, and `page.waitForSelector()` return patched handles automatically.
 
-> Contributed by [@evelaa123](https://github.com/evelaa123) — full Playwright API coverage.
+> Contributed by [@evelaa123](https://github.com/evelaa123) — full Playwright and Puppeteer API coverage.
 
 ## Configuration
 
