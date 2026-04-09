@@ -645,7 +645,15 @@ stealth_args = get_default_stealth_args()  # all fingerprint flags
 from cloakbrowser import launch_async
 browser = await launch_async(args=["--remote-debugging-port=9242"])
 # Connect your framework to http://127.0.0.1:9242 — all stealth flags are set
+# Note: humanize requires the wrapper (see below)
 ```
+
+> **Humanize over CDP**: Stealth fingerprint patches work automatically over CDP, but `humanize=True` is a wrapper-level feature. If you connect to CloakBrowser via CDP from a separate script, import the patching functions to add humanization:
+>
+> ```js
+> import { patchBrowser, resolveConfig } from 'cloakbrowser/human';
+> patchBrowser(browser, resolveConfig('default'));
+> ```
 
 | Framework | Stars | Language | Example |
 |-----------|-------|----------|---------|
