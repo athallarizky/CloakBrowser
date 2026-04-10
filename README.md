@@ -874,7 +874,39 @@ page.goto("https://heavily-protected-site.com")  # passes DataDome, etc.
 browser.close()
 ```
 
-This runs a real headed browser rendered on a virtual display — no physical monitor needed. Combined with a residential proxy, this passes even the most aggressive detection services. Datacenter IPs are often flagged by IP reputation regardless of browser fingerprint — a residential proxy makes the difference.
+This runs a real headed browser rendered on a virtual display — no physical monitor needed. Combine with the recommended config below for maximum stealth.
+
+---
+
+### Recommended config for anti-bot sites
+
+Most blocks come from missing one of these three things, not from browser fingerprint detection:
+
+```python
+browser = launch(
+    proxy="http://your-residential-proxy:port",  # residential IP — datacenter IPs get blocked by reputation alone
+    geoip=True,      # matches timezone + locale to proxy exit IP (without this: UTC + en-US = bot signal)
+    headless=False,   # headed mode — some sites detect headless even with C++ patches
+    humanize=True,    # human-like mouse, keyboard, scroll behavior
+)
+```
+
+```javascript
+const browser = await launch({
+    proxy: 'http://your-residential-proxy:port',
+    geoip: true,
+    headless: false,
+    humanize: true,
+});
+```
+
+If your proxy supports SOCKS5, use it for better compatibility — SOCKS5 tunnels raw TCP, avoiding HTTP CONNECT issues that some proxies have with HTTP/2:
+
+```python
+browser = launch(proxy="socks5://user:pass@proxy:1080", geoip=True, headless=False, humanize=True)
+```
+
+If you're still blocked after this, the issue is almost always IP reputation — try a different proxy region or test from a home ISP to confirm the browser itself is clean.
 
 ---
 
@@ -910,7 +942,7 @@ await ctx.close();
 ctx = await launchPersistentContext({ userDataDir: './profile' });
 ```
 
-For stateless/ephemeral use cases, `launch(args=["--disable-http2"])` forces HTTP/1.1 which bypasses the check. Only use this flag for sites that require it — most work fine with HTTP/2.
+For stateless/ephemeral use cases, `launch(args=["--disable-http2"])` forces HTTP/1.1 which bypasses the check. Only use this flag for sites that require it — most work fine with HTTP/2. If your proxy supports SOCKS5, use `proxy="socks5://user:pass@host:port"` instead — SOCKS5 bypasses HTTP CONNECT entirely.
 
 ---
 
