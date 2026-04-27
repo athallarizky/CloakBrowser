@@ -626,12 +626,38 @@ Supported by the binary but **not set by default** — pass via `args` to custom
 | `--fingerprint-locale` | Locale (e.g. `en-US`) |
 | `--fingerprint-storage-quota` | Override storage quota in MB — affects `storage.estimate()`, `storageBuckets`, and legacy webkit APIs. Auto-normalized when `--fingerprint` is set |
 | `--fingerprint-taskbar-height` | Override taskbar height (binary defaults: Win=48, Mac=95, Linux=0) |
-| `--fingerprint-fonts-dir` | Path to cross-platform font directory |
+| `--fingerprint-fonts-dir` | Path to directory containing target-platform fonts (see [Font Setup on Linux](#font-setup-on-linux)) |
 | `--fingerprint-webrtc-ip` | WebRTC ICE candidate IP replacement. Use `auto` to resolve from proxy exit IP (makes an HTTP call through the proxy), or pass an explicit IP. Auto-injected when `geoip=True` |
 | `--fingerprint-noise=false` | Disable noise injection (canvas, WebGL, audio, client rects) while keeping the deterministic fingerprint seed active |
 | `--enable-blink-features=FakeShadowRoot` | Access closed shadow DOM elements |
 
 > **Note:** All stealth tests were verified with the default fingerprint config above. Changing these flags may affect detection results — test your configuration before using in production.
+
+### Font Setup on Linux
+
+**Required for aggressive anti-bot sites (Kasada, Akamai).** When running on Linux, installing Windows fonts changes how the browser renders text on canvas, which directly affects canvas fingerprint hashes. Without Windows fonts, anti-bot systems detect the Linux font rendering as inconsistent with a Windows profile and block the request. This applies even without the `--fingerprint-fonts-dir` flag — the fonts just need to be installed on the system.
+
+```bash
+# 1. Copy fonts from a Windows machine's C:\Windows\Fonts\ directory
+#    (ttf-mscorefonts-installer only has old XP-era fonts — not enough)
+mkdir -p ~/.local/share/fonts/windows
+cp /path/to/windows/fonts/*.ttf ~/.local/share/fonts/windows/
+cp /path/to/windows/fonts/*.TTF ~/.local/share/fonts/windows/
+
+# 2. Register them with fontconfig (mandatory — without this, the browser can't see them)
+fc-cache -f
+
+# 3. Launch normally — no extra flags needed
+browser = launch(headless=True, proxy="http://user:pass@proxy:port", geoip=True)
+```
+
+Optionally pass `--fingerprint-fonts-dir` to also control which fonts are visible to enumeration scripts like CreepJS:
+
+```python
+browser = launch(
+    args=["--fingerprint-fonts-dir=/home/user/.local/share/fonts/windows"],
+)
+```
 
 ### Examples
 
@@ -946,7 +972,15 @@ If your proxy supports SOCKS5, use it for better compatibility — SOCKS5 tunnel
 browser = launch(proxy="socks5://user:pass@proxy:1080", geoip=True, headless=False, humanize=True)
 ```
 
-If you're still blocked after this, the issue is almost always IP reputation — try a different proxy region or test from a home ISP to confirm the browser itself is clean.
+If you're still blocked after this, check the font setup below.
+
+---
+
+### Blocked on Kasada / Akamai sites despite correct config?
+
+On Linux, missing Windows fonts changes how the browser renders canvas text, producing fingerprint hashes that anti-bot systems flag as inconsistent with a Windows profile. This is the most common cause of blocks on aggressive sites after proxy, geoip, and headed mode are already set up correctly.
+
+Install Windows fonts on your system — see [Font Setup on Linux](#font-setup-on-linux) above.
 
 ---
 
