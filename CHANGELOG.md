@@ -8,6 +8,13 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ## [Unreleased]
 
+## [0.3.27] — 2026-05-06
+
+- **[wrapper]** Per-call `human_config` override — pass `human_config={...}` to individual humanized methods to override global HumanConfig on a per-action basis (#183)
+- **[wrapper]** Humanized `scrollIntoViewIfNeeded` — auto-scrolls with human-like behavior when `humanize=True` (#183)
+- **[wrapper]** Forward `timeout` parameter through humanized Playwright methods (#183)
+- **[wrapper]** Fix humanize timeout default to align with Playwright's 30s auto-retry instead of custom 2s (#172)
+
 ## [0.3.26] — 2026-04-28
 
 - **[binary]** Windows x64 upgraded to Chromium 146.0.7680.177.4 — 57 source-level fingerprint patches (up from 33 on 145.0.7632.159.7), now matches Linux. Includes all binary improvements from 0.3.18–0.3.25: native SOCKS5 proxy with UDP ASSOCIATE (QUIC/HTTP3), WebRTC IP spoofing, proxy signal removal, CDP input stealth, storage quota normalization, WebAuthn/AAC/window position patches, WebGL and canvas consistency fixes, expanded GPU model database
