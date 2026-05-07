@@ -215,7 +215,7 @@ const page = await browser.newPage();
 ## Requirements
 
 - Node.js >= 20
-- One of: `playwright-core` >= 1.40 or `puppeteer-core` >= 21
+- One of: `playwright-core` >= 1.53 or `puppeteer-core` >= 21
 
 ## Troubleshooting
 
