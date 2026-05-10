@@ -143,7 +143,7 @@ export function normalizeSocksStringUrl(urlStr: string): string {
     const credsChanged = encUser !== rawUserEnc
       || (hasPassword ? encPass !== rawPassEnc : false);
     if (credsChanged) {
-      console.debug(
+      console.info(
         "[cloakbrowser] Auto URL-encoded SOCKS5 proxy credentials (special " +
         "characters detected). Pre-encode the URL to suppress this notice.",
       );

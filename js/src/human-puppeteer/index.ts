@@ -47,7 +47,7 @@
  */
 
 import type { Browser, Page, Frame, CDPSession, ElementHandle, BrowserContext } from 'puppeteer-core';
-import type { HumanConfig } from '../human/config.js';
+import type { HumanConfig, HumanActionOptions } from '../human/config.js';
 import { resolveConfig, mergeConfig, rand, randRange, sleep } from '../human/config.js';
 import { RawMouse, RawKeyboard, humanMove, humanClick, clickTarget, humanIdle } from '../human/mouse.js';
 import { humanType } from './keyboard.js';
@@ -331,14 +331,12 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== click (with clickCount support for dblclick) ====
-  const humanClickFn = async (selector: string, options?: Partial<HumanConfig> & ({
+  const humanClickFn = async (selector: string, options?: HumanActionOptions & {
     button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
     clickCount?: number;
     count?: number;
     delay?: number;
-    human_config?: Partial<HumanConfig>;
-    timeout?: number;
-  })) => {
+  }) => {
     await ensureCursorInit();
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
@@ -366,7 +364,7 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== hover ====
-  const humanHoverFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+  const humanHoverFn = async (selector: string, options?: HumanActionOptions) => {
     await ensureCursorInit();
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
@@ -382,11 +380,9 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== type ====
-  const humanTypeFn = async (selector: string, text: string, options?: Partial<HumanConfig> & ({
+  const humanTypeFn = async (selector: string, text: string, options?: HumanActionOptions & {
     delay?: number;
-    human_config?: Partial<HumanConfig>;
-    timeout?: number;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     await sleep(randRange(callCfg.field_switch_delay));
     await humanClickFn(selector, options);
@@ -410,7 +406,7 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== tap ====
-  const humanTapFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+  const humanTapFn = async (selector: string, options?: HumanActionOptions) => {
     await humanClickFn(selector, options);
   };
 
@@ -671,13 +667,12 @@ function patchSingleElementHandle(
   };
 
   // --- el.click() ---
-  (el as any).click = async (options?: Partial<HumanConfig> & ({
+  (el as any).click = async (options?: HumanActionOptions & {
     button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
     clickCount?: number;
     count?: number;
     delay?: number;
-    human_config?: Partial<HumanConfig>;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElClick(options);
@@ -701,7 +696,7 @@ function patchSingleElementHandle(
   };
 
   // --- el.type() ---
-  (el as any).type = async (text: string, options?: Partial<HumanConfig> & ({ delay?: number; human_config?: Partial<HumanConfig> })) => {
+  (el as any).type = async (text: string, options?: HumanActionOptions & { delay?: number }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElType(text, options);
@@ -718,7 +713,7 @@ function patchSingleElementHandle(
   // page.click(). Only patched when the underlying ElementHandle exposes
   // ``scrollIntoView`` (Puppeteer v22+).
   if (origElScrollIntoView) {
-    (el as any).scrollIntoView = async (options?: Partial<HumanConfig> & { human_config?: Partial<HumanConfig> }) => {
+    (el as any).scrollIntoView = async (options?: HumanActionOptions) => {
       const callCfg = mergeConfig(cfg, options?.human_config ?? options);
       await (page as any)._ensureCursorInit();
       try {
@@ -870,26 +865,22 @@ function patchSingleFrame(
 
   const origFrameSelect = frame.select.bind(frame);
 
-  (frame as any).click = async (selector: string, options?: Partial<HumanConfig> & ({
+  (frame as any).click = async (selector: string, options?: HumanActionOptions & {
     button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
     clickCount?: number;
     count?: number;
     delay?: number;
-    human_config?: Partial<HumanConfig>;
-    timeout?: number;
-  })) => {
+  }) => {
     await (page as any).click(selector, options);
   };
 
-  (frame as any).hover = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+  (frame as any).hover = async (selector: string, options?: HumanActionOptions) => {
     await (page as any).hover(selector, options);
   };
 
-  (frame as any).type = async (selector: string, text: string, options?: Partial<HumanConfig> & ({
+  (frame as any).type = async (selector: string, text: string, options?: HumanActionOptions & {
     delay?: number;
-    human_config?: Partial<HumanConfig>;
-    timeout?: number;
-  })) => {
+  }) => {
     await (page as any).type(selector, text, options);
   };
 
@@ -903,7 +894,7 @@ function patchSingleFrame(
     await (page as any).focus(selector);
   };
 
-  (frame as any).tap = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+  (frame as any).tap = async (selector: string, options?: HumanActionOptions) => {
     await (page as any).click(selector, options);
   };
 

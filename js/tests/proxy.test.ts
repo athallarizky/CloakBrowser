@@ -263,10 +263,10 @@ describe("resolveProxyConfig", () => {
     expect(proxyArgs).toEqual(["--proxy-server=socks5://user:a%40b%40c@host:1080"]);
   });
 
-  // Visibility for #157: when wrapper actually rewrites the URL, surface a
-  // debug log so users debugging silent SOCKS5 fallback can see what happened.
-  it("logs debug message when SOCKS5 credentials get re-encoded", () => {
-    const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+  // Visibility for #157: when wrapper actually rewrites the URL, surface an
+  // info log so users debugging silent SOCKS5 fallback can see what happened.
+  it("logs info message when SOCKS5 credentials get re-encoded", () => {
+    const debugSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     try {
       resolveProxyConfig("socks5://user:pass=123@host:1080");
       expect(debugSpy).toHaveBeenCalledWith(
@@ -282,7 +282,7 @@ describe("resolveProxyConfig", () => {
   });
 
   it("stays silent when SOCKS5 URL is already encoded (no log spam)", () => {
-    const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const debugSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     try {
       resolveProxyConfig("socks5://user:pass%3D123@host:1080");
       const reencodedCalls = debugSpy.mock.calls
@@ -295,7 +295,7 @@ describe("resolveProxyConfig", () => {
   });
 
   it("stays silent when SOCKS5 URL has no credentials", () => {
-    const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const debugSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     try {
       resolveProxyConfig("socks5://host:1080");
       const reencodedCalls = debugSpy.mock.calls
@@ -310,7 +310,7 @@ describe("resolveProxyConfig", () => {
   it("stays silent when only host case differs (no credential rewrite)", () => {
     // Parity with Python: log condition must track credential changes, not
     // cosmetic URL-string differences (regression for Copilot's PR #209 review).
-    const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const debugSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     try {
       resolveProxyConfig("socks5://USER:pass@HOST.com:1080");
       const reencodedCalls = debugSpy.mock.calls

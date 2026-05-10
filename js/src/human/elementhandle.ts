@@ -17,7 +17,7 @@
  */
 
 import type { Page, Frame, ElementHandle, CDPSession } from 'playwright-core';
-import type { HumanConfig } from './config.js';
+import type { HumanConfig, HumanActionOptions } from './config.js';
 import { rand, randRange, sleep, mergeConfig } from './config.js';
 import { RawMouse, RawKeyboard, humanMove, humanClick, clickTarget, humanIdle } from './mouse.js';
 import { humanType } from './keyboard.js';
@@ -179,18 +179,16 @@ export function patchSingleElementHandle(
   };
 
   // --- el.click() ---
-  (el as any).click = async (options?: Partial<HumanConfig> & ({
+  (el as any).click = async (options?: HumanActionOptions & {
     button?: 'left' | 'right' | 'middle';
     clickCount?: number;
     delay?: number;
     force?: boolean;
-    human_config?: Partial<HumanConfig>;
     modifiers?: Array<'Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift'>;
     noWaitAfter?: boolean;
     position?: { x: number; y: number };
-    timeout?: number;
     trial?: boolean;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElClick(options);
@@ -198,17 +196,15 @@ export function patchSingleElementHandle(
   };
 
   // --- el.dblclick() ---
-  (el as any).dblclick = async (options?: Partial<HumanConfig> & ({
+  (el as any).dblclick = async (options?: HumanActionOptions & {
     button?: 'left' | 'right' | 'middle';
     delay?: number;
     force?: boolean;
-    human_config?: Partial<HumanConfig>;
     modifiers?: Array<'Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift'>;
     noWaitAfter?: boolean;
     position?: { x: number; y: number };
-    timeout?: number;
     trial?: boolean;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElDblclick(options);
@@ -218,14 +214,12 @@ export function patchSingleElementHandle(
   };
 
   // --- el.hover() ---
-  (el as any).hover = async (options?: Partial<HumanConfig> & ({
+  (el as any).hover = async (options?: HumanActionOptions & {
     force?: boolean;
-    human_config?: Partial<HumanConfig>;
     modifiers?: Array<'Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift'>;
     position?: { x: number; y: number };
-    timeout?: number;
     trial?: boolean;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElHover(options);
@@ -233,12 +227,10 @@ export function patchSingleElementHandle(
   };
 
   // --- el.type() ---
-  (el as any).type = async (text: string, options?: Partial<HumanConfig> & ({
+  (el as any).type = async (text: string, options?: HumanActionOptions & {
     delay?: number;
-    human_config?: Partial<HumanConfig>;
     noWaitAfter?: boolean;
-    timeout?: number;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElType(text, options);
@@ -250,12 +242,10 @@ export function patchSingleElementHandle(
   };
 
   // --- el.fill() ---
-  (el as any).fill = async (value: string, options?: Partial<HumanConfig> & ({
+  (el as any).fill = async (value: string, options?: HumanActionOptions & {
     force?: boolean;
-    human_config?: Partial<HumanConfig>;
     noWaitAfter?: boolean;
-    timeout?: number;
-  })) => {
+  }) => {
     const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElFill(value, options);
@@ -374,7 +364,7 @@ export function patchSingleElementHandle(
   // wheel sequence used by page.click() etc. Falls back to the native
   // method if the element is detached or scrolling fails.
   if (origElScrollIntoViewIfNeeded) {
-    (el as any).scrollIntoViewIfNeeded = async (options?: Partial<HumanConfig> & ({ human_config?: Partial<HumanConfig>; timeout?: number })) => {
+    (el as any).scrollIntoViewIfNeeded = async (options?: HumanActionOptions) => {
       const callCfg = mergeConfig(cfg, options?.human_config ?? options);
       const ensureCursorInit = (page as any)._ensureCursorInit;
       if (ensureCursorInit) await ensureCursorInit();

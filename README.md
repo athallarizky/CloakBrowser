@@ -1192,5 +1192,7 @@ Issues and PRs welcome. If something isn't working, [open an issue](https://gith
 - [@evelaa123](https://github.com/evelaa123) — humanize behavior, persistent contexts, Windows fix
 - [@yahooguntu](https://github.com/yahooguntu) — persistent contexts
 - [@kitiho](https://github.com/kitiho) — null viewport fix
-- [@eofreternal](https://github.com/eofreternal) — humanConfig type fix
+- [@eofreternal](https://github.com/eofreternal) — humanConfig type fix, humanized method option types
+- [@manaskarra](https://github.com/manaskarra) — iframe scope fix for humanized frame actions
+- [@Youhai020616](https://github.com/Youhai020616) — SOCKS5 credential encoding logging
 - [@AlexTech314](https://github.com/AlexTech314) — AWS Lambda integration
