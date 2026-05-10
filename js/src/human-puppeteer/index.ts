@@ -319,7 +319,11 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   }
 
   // ==== goto ====
-  const humanGoto = async (url: string, options?: any) => {
+  const humanGoto = async (url: string, options?: {
+    referer?: string;
+    timeout?: number;
+    waitUntil?: 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
+  }) => {
     const response = await originals.goto(url, options);
     stealth.invalidate();
     patchFrames(page, cfg, cursor, raw, rawKb, originals, stealth);
@@ -327,11 +331,18 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== click (with clickCount support for dblclick) ====
-  const humanClickFn = async (selector: string, options?: any) => {
+  const humanClickFn = async (selector: string, options?: Partial<HumanConfig> & ({
+    button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
+    clickCount?: number;
+    count?: number;
+    delay?: number;
+    human_config?: Partial<HumanConfig>;
+    timeout?: number;
+  })) => {
     await ensureCursorInit();
-    const callCfg = mergeConfig(cfg, options?.human_config);
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
     const { box, cursorX, cursorY } = await scrollToElement(page, raw, selector, cursor.x, cursor.y, callCfg, options?.timeout);
     cursor.x = cursorX;
@@ -355,11 +366,11 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== hover ====
-  const humanHoverFn = async (selector: string, options?: any) => {
+  const humanHoverFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await ensureCursorInit();
-    const callCfg = mergeConfig(cfg, options?.human_config);
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
     const { box, cursorX, cursorY } = await scrollToElement(page, raw, selector, cursor.x, cursor.y, callCfg, options?.timeout);
     cursor.x = cursorX;
@@ -371,8 +382,12 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== type ====
-  const humanTypeFn = async (selector: string, text: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  const humanTypeFn = async (selector: string, text: string, options?: Partial<HumanConfig> & ({
+    delay?: number;
+    human_config?: Partial<HumanConfig>;
+    timeout?: number;
+  })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     await sleep(randRange(callCfg.field_switch_delay));
     await humanClickFn(selector, options);
     await sleep(rand(100, 250));
@@ -395,7 +410,7 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // ==== tap ====
-  const humanTapFn = async (selector: string, options?: any) => {
+  const humanTapFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await humanClickFn(selector, options);
   };
 
@@ -413,14 +428,19 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   // ============================================================
   // Mouse patches
   // ============================================================
-  page.mouse.move = async (x: number, y: number, options?: any) => {
+  page.mouse.move = async (x: number, y: number, options?: { steps?: number }) => {
     await ensureCursorInit();
     await humanMove(raw, cursor.x, cursor.y, x, y, cfg);
     cursor.x = x;
     cursor.y = y;
   };
 
-  page.mouse.click = async (x: number, y: number, options?: any) => {
+  page.mouse.click = async (x: number, y: number, options?: {
+    button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
+    clickCount?: number;
+    count?: number;
+    delay?: number;
+  }) => {
     await ensureCursorInit();
     await humanMove(raw, cursor.x, cursor.y, x, y, cfg);
     cursor.x = x;
@@ -455,7 +475,7 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
     (page.mouse as any).dragAndDrop = async (
       start: { x: number; y: number },
       target: { x: number; y: number },
-      options?: any,
+      options?: { delay?: number },
     ) => {
       await ensureCursorInit();
       await humanMove(raw, cursor.x, cursor.y, start.x, start.y, cfg);
@@ -475,12 +495,12 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   // ============================================================
   // Keyboard patches
   // ============================================================
-  page.keyboard.type = async (text: string, options?: any) => {
+  page.keyboard.type = async (text: string, options?: { delay?: number }) => {
     const cdp = await ensureCdp();
     await humanType(page, rawKb, text, cfg, cdp);
   };
 
-  page.keyboard.press = async (key: any, options?: any) => {
+  page.keyboard.press = async (key: any, options?: { delay?: number }) => {
     await sleep(rand(20, 60));
     await originals.keyboardDown(key as any);
     await sleep(randRange(cfg.key_hold));
@@ -551,7 +571,11 @@ function patchElementHandle(
     return els;
   };
 
-  (page as any).waitForSelector = async (selector: string, options?: any) => {
+  (page as any).waitForSelector = async (selector: string, options?: {
+    hidden?: boolean;
+    timeout?: number;
+    visible?: boolean;
+  }) => {
     const el = await origWaitForSelector(selector, options);
     if (el) patchSingleElementHandle(el, page, cfg, cursor, raw, rawKb, originals, stealth);
     return el;
@@ -603,14 +627,18 @@ function patchSingleElementHandle(
     return children;
   };
 
-  (el as any).waitForSelector = async (selector: string, options?: any) => {
+  (el as any).waitForSelector = async (selector: string, options?: {
+    hidden?: boolean;
+    timeout?: number;
+    visible?: boolean;
+  }) => {
     const child = await origElWaitForSelector(selector, options);
     if (child) patchSingleElementHandle(child, page, cfg, cursor, raw, rawKb, originals, stealth);
     return child;
   };
 
   // --- Helper: get box and move cursor. Accepts a per-call ``callCfg``
-  // so type/fill overrides like ``el.type(text, { human_config: {...} })``
+  // so type/fill overrides like ``el.type(text, { typing_delay: 30 })``
   // carry through to mouse timing for that single call. Also scrolls into
   // view first so off-screen elements work (#129, #172 follow-up).
   const moveToElement = async (callCfg: HumanConfig = cfg) => {
@@ -633,7 +661,7 @@ function patchSingleElementHandle(
     const target = clickTarget(box, isInp, callCfg);
 
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
 
     await humanMove(raw, cursor.x, cursor.y, target.x, target.y, callCfg);
@@ -643,8 +671,14 @@ function patchSingleElementHandle(
   };
 
   // --- el.click() ---
-  (el as any).click = async (options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  (el as any).click = async (options?: Partial<HumanConfig> & ({
+    button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
+    clickCount?: number;
+    count?: number;
+    delay?: number;
+    human_config?: Partial<HumanConfig>;
+  })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElClick(options);
 
@@ -667,8 +701,8 @@ function patchSingleElementHandle(
   };
 
   // --- el.type() ---
-  (el as any).type = async (text: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  (el as any).type = async (text: string, options?: Partial<HumanConfig> & ({ delay?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     const info = await moveToElement(callCfg);
     if (!info) return origElType(text, options);
     await humanClick(raw, info.isInp, callCfg);
@@ -684,8 +718,8 @@ function patchSingleElementHandle(
   // page.click(). Only patched when the underlying ElementHandle exposes
   // ``scrollIntoView`` (Puppeteer v22+).
   if (origElScrollIntoView) {
-    (el as any).scrollIntoView = async (options?: any) => {
-      const callCfg = mergeConfig(cfg, options?.human_config);
+    (el as any).scrollIntoView = async (options?: Partial<HumanConfig> & { human_config?: Partial<HumanConfig> }) => {
+      const callCfg = mergeConfig(cfg, options?.human_config ?? options);
       await (page as any)._ensureCursorInit();
       try {
         const { cursorX, cursorY } = await humanScrollIntoView(
@@ -703,7 +737,7 @@ function patchSingleElementHandle(
 
   // --- el.press() ---
   if (origElPress) {
-    (el as any).press = async (key: string, options?: any) => {
+    (el as any).press = async (key: string, options?: { delay?: number }) => {
       await sleep(rand(20, 60));
       await originals.keyboardDown(key as any);
       await sleep(randRange(cfg.key_hold));
@@ -742,7 +776,7 @@ function patchSingleElementHandle(
 
   // --- el.drop() ---
   if (origElDrop) {
-    (el as any).drop = async (draggable: ElementHandle, options?: any) => {
+    (el as any).drop = async (draggable: ElementHandle, options?: { delay?: number }) => {
       const srcBox = await draggable.boundingBox();
       const tgtBox = await el.boundingBox();
 
@@ -772,7 +806,7 @@ function patchSingleElementHandle(
 
   // --- el.dragAndDrop() ---
   if (origElDragAndDrop) {
-    (el as any).dragAndDrop = async (targetEl: ElementHandle, options?: any) => {
+    (el as any).dragAndDrop = async (targetEl: ElementHandle, options?: { delay?: number }) => {
       const srcBox = await el.boundingBox();
       const tgtBox = await targetEl.boundingBox();
 
@@ -836,15 +870,26 @@ function patchSingleFrame(
 
   const origFrameSelect = frame.select.bind(frame);
 
-  (frame as any).click = async (selector: string, options?: any) => {
+  (frame as any).click = async (selector: string, options?: Partial<HumanConfig> & ({
+    button?: 'left' | 'right' | 'middle' | 'back' | 'forward';
+    clickCount?: number;
+    count?: number;
+    delay?: number;
+    human_config?: Partial<HumanConfig>;
+    timeout?: number;
+  })) => {
     await (page as any).click(selector, options);
   };
 
-  (frame as any).hover = async (selector: string, options?: any) => {
+  (frame as any).hover = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await (page as any).hover(selector, options);
   };
 
-  (frame as any).type = async (selector: string, text: string, options?: any) => {
+  (frame as any).type = async (selector: string, text: string, options?: Partial<HumanConfig> & ({
+    delay?: number;
+    human_config?: Partial<HumanConfig>;
+    timeout?: number;
+  })) => {
     await (page as any).type(selector, text, options);
   };
 
@@ -858,7 +903,7 @@ function patchSingleFrame(
     await (page as any).focus(selector);
   };
 
-  (frame as any).tap = async (selector: string, options?: any) => {
+  (frame as any).tap = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await (page as any).click(selector, options);
   };
 
@@ -881,7 +926,11 @@ function patchSingleFrame(
     return els;
   };
 
-  (frame as any).waitForSelector = async (selector: string, options?: any) => {
+  (frame as any).waitForSelector = async (selector: string, options?: {
+    hidden?: boolean;
+    timeout?: number;
+    visible?: boolean;
+  }) => {
     const el = await origFrameWaitForSelector(selector, options);
     if (el) patchSingleElementHandle(el, page, cfg, cursor, raw, rawKb, originals, stealth);
     return el;
@@ -927,7 +976,7 @@ export function patchBrowser(browser: Browser, cfg: HumanConfig): void {
   for (const methodName of ['createBrowserContext', 'createIncognitoBrowserContext'] as const) {
     if (typeof (browser as any)[methodName] === 'function') {
       const origCreateContext = (browser as any)[methodName].bind(browser);
-      (browser as any)[methodName] = async (options?: any) => {
+      (browser as any)[methodName] = async (options?: Parameters<typeof origCreateContext>[0]) => {
         const context: BrowserContext = await origCreateContext(options);
 
         const origCtxNewPage = context.newPage.bind(context);

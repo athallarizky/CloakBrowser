@@ -295,7 +295,11 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   }
 
   // --- goto (invalidate isolated world on navigation) ---
-  const humanGoto = async (url: string, options?: any) => {
+  const humanGoto = async (url: string, options?: {
+    referer?: string;
+    timeout?: number;
+    waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+  }) => {
     const response = await originals.goto(url, options);
     stealth.invalidate();
     patchFrames(page, cfg, cursor, raw, rawKb, originals, stealth);
@@ -303,11 +307,11 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- click ---
-  const humanClickFn = async (selector: string, options?: any) => {
+  const humanClickFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await ensureCursorInit();
-    const callCfg = mergeConfig(cfg, options?.human_config);
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
     const { box, cursorX, cursorY } = await scrollToElement(page, raw, selector, cursor.x, cursor.y, callCfg, options?.timeout);
     cursor.x = cursorX;
@@ -321,12 +325,13 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- dblclick ---
-  const humanDblclickFn = async (selector: string, options?: any) => {
+  const humanDblclickFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await ensureCursorInit();
-    const callCfg = mergeConfig(cfg, options?.human_config);
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
+
     const { box, cursorX, cursorY } = await scrollToElement(page, raw, selector, cursor.x, cursor.y, callCfg, options?.timeout);
     cursor.x = cursorX;
     cursor.y = cursorY;
@@ -341,11 +346,11 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- hover ---
-  const humanHoverFn = async (selector: string, options?: any) => {
+  const humanHoverFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await ensureCursorInit();
-    const callCfg = mergeConfig(cfg, options?.human_config);
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
     const { box, cursorX, cursorY } = await scrollToElement(page, raw, selector, cursor.x, cursor.y, callCfg, options?.timeout);
     cursor.x = cursorX;
@@ -357,8 +362,8 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- type ---
-  const humanTypeFn = async (selector: string, text: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  const humanTypeFn = async (selector: string, text: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     await sleep(randRange(callCfg.field_switch_delay));
     await humanClickFn(selector, options);
     await sleep(rand(100, 250));
@@ -367,8 +372,8 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- fill (clears existing content first) ---
-  const humanFillFn = async (selector: string, value: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  const humanFillFn = async (selector: string, value: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     await sleep(randRange(callCfg.field_switch_delay));
     await humanClickFn(selector, options);
     await sleep(rand(100, 250));
@@ -381,9 +386,9 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- clear ---
-  const humanClearFn = async (selector: string, options?: any) => {
+  const humanClearFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     if (!await isSelectorFocused(stealth, page, selector)) {
-      await humanClickFn(selector);
+      await humanClickFn(selector, options);
     }
     await sleep(rand(50, 150));
     await originals.keyboardPress(SELECT_ALL);
@@ -392,46 +397,48 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- check ---
-  const humanCheckFn = async (selector: string, options?: any) => {
-    if (cfg.idle_between_actions) {
-      await humanIdle(raw, rand(cfg.idle_between_duration[0], cfg.idle_between_duration[1]), cursor.x, cursor.y, cfg);
+  const humanCheckFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
+    if (callCfg.idle_between_actions) {
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
     const checked = await originals.isChecked(selector).catch(() => false);
     if (!checked) {
-      await humanClickFn(selector);
+      await humanClickFn(selector, options);
     }
   };
 
   // --- uncheck ---
-  const humanUncheckFn = async (selector: string, options?: any) => {
-    if (cfg.idle_between_actions) {
-      await humanIdle(raw, rand(cfg.idle_between_duration[0], cfg.idle_between_duration[1]), cursor.x, cursor.y, cfg);
+  const humanUncheckFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
+    if (callCfg.idle_between_actions) {
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
     const checked = await originals.isChecked(selector).catch(() => true);
     if (checked) {
-      await humanClickFn(selector);
+      await humanClickFn(selector, options);
     }
   };
 
   // --- selectOption ---
-  const humanSelectOptionFn = async (selector: string, values: any, options?: any) => {
-    await humanHoverFn(selector);
+  const humanSelectOptionFn = async (selector: string, values: any, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    await humanHoverFn(selector, options);
     await sleep(rand(100, 300));
     return originals.selectOption(selector, values, options);
   };
 
   // --- press (checks focus first — avoids redundant mouse moves) ---
-  const humanPressFn = async (selector: string, key: string, options?: any) => {
+  const humanPressFn = async (selector: string, key: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     if (!await isSelectorFocused(stealth, page, selector)) {
-      await humanClickFn(selector);
+      await humanClickFn(selector, options);
     }
     await sleep(rand(50, 150));
     await originals.keyboardPress(key);
   };
 
   // --- pressSequentially ---
-  const humanPressSequentiallyFn = async (selector: string, text: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  const humanPressSequentiallyFn = async (selector: string, text: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (!await isSelectorFocused(stealth, page, selector)) {
       await humanClickFn(selector, options);
     }
@@ -441,7 +448,7 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- tap ---
-  const humanTapFn = async (selector: string, options?: any) => {
+  const humanTapFn = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await humanClickFn(selector, options);
   };
 
@@ -461,14 +468,20 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   (page as any).clear = humanClearFn;
 
   // --- mouse patches ---
-  page.mouse.move = async (x: number, y: number, options?: any) => {
+  page.mouse.move = async (x: number, y: number, options?: {
+    steps?: number;
+  }) => {
     await ensureCursorInit();
     await humanMove(raw, cursor.x, cursor.y, x, y, cfg);
     cursor.x = x;
     cursor.y = y;
   };
 
-  page.mouse.click = async (x: number, y: number, options?: any) => {
+  page.mouse.click = async (x: number, y: number, options?: {
+    button?: 'left' | 'right' | 'middle';
+    clickCount?: number;
+    delay?: number;
+  }) => {
     await ensureCursorInit();
     await humanMove(raw, cursor.x, cursor.y, x, y, cfg);
     cursor.x = x;
@@ -477,7 +490,7 @@ function patchPage(page: Page, cfg: HumanConfig, cursor: CursorState): void {
   };
 
   // --- keyboard patches ---
-  page.keyboard.type = async (text: string, options?: any) => {
+  page.keyboard.type = async (text: string, options?: { delay?: number }) => {
     const cdp = await ensureCdp();
     await humanType(page, rawKb, text, cfg, cdp);
   };
@@ -580,10 +593,10 @@ function patchSingleFrame(
   const origFrameTap = (frame as any).tap?.bind(frame);
   const origFrameDragAndDrop = frame.dragAndDrop.bind(frame);
 
-  const moveToFrameSelector = async (selector: string, options?: any, inputBias = false) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  const moveToFrameSelector = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> }), inputBias = false) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (callCfg.idle_between_actions) {
-      await humanIdle(raw, rand(callCfg.idle_between_duration[0], callCfg.idle_between_duration[1]), cursor.x, cursor.y, callCfg);
+      await humanIdle(raw, cursor.x, cursor.y, callCfg);
     }
 
     const locator = firstFrameLocator(frame, selector);
@@ -601,7 +614,7 @@ function patchSingleFrame(
     return { callCfg, isInput };
   };
 
-  const frameClick = async (selector: string, options?: any) => {
+  const frameClick = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     const moved = await moveToFrameSelector(selector, options);
     if (!moved) return origFrameClick(selector, options);
     await humanClick(raw, moved.isInput, moved.callCfg);
@@ -609,14 +622,14 @@ function patchSingleFrame(
 
   const getFrameCdp = async () => stealth.getCdpSession().catch(() => null);
 
-  const frameHover = async (selector: string, options?: any) => {
+  const frameHover = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     const moved = await moveToFrameSelector(selector, options, false);
     if (!moved) return origFrameHover(selector, options);
   };
 
   (frame as any).click = frameClick;
 
-  (frame as any).dblclick = async (selector: string, options?: any) => {
+  (frame as any).dblclick = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     const moved = await moveToFrameSelector(selector, options);
     if (!moved) return origFrameDblclick(selector, options);
     await raw.down({ clickCount: 2 });
@@ -626,8 +639,8 @@ function patchSingleFrame(
 
   (frame as any).hover = frameHover;
 
-  (frame as any).type = async (selector: string, text: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  (frame as any).type = async (selector: string, text: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     await sleep(randRange(callCfg.field_switch_delay));
     await frameClick(selector, options);
     await sleep(rand(100, 250));
@@ -635,8 +648,8 @@ function patchSingleFrame(
     await humanType(page, rawKb, text, callCfg, cdp).catch(() => origFrameType(selector, text, options));
   };
 
-  (frame as any).fill = async (selector: string, value: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  (frame as any).fill = async (selector: string, value: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     await sleep(randRange(callCfg.field_switch_delay));
     await frameClick(selector, options);
     await sleep(rand(100, 250));
@@ -648,23 +661,23 @@ function patchSingleFrame(
     await humanType(page, rawKb, value, callCfg, cdp).catch(() => origFrameFill(selector, value, options));
   };
 
-  (frame as any).check = async (selector: string, options?: any) => {
+  (frame as any).check = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     const checked = await firstFrameLocator(frame, selector).isChecked?.().catch(() => false) ?? false;
     if (!checked) await frameClick(selector, options).catch(() => origFrameCheck(selector, options));
   };
 
-  (frame as any).uncheck = async (selector: string, options?: any) => {
+  (frame as any).uncheck = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     const checked = await firstFrameLocator(frame, selector).isChecked?.().catch(() => true) ?? true;
     if (checked) await frameClick(selector, options).catch(() => origFrameUncheck(selector, options));
   };
 
-  (frame as any).selectOption = async (selector: string, values: any, options?: any) => {
+  (frame as any).selectOption = async (selector: string, values: any, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await frameHover(selector, options);
     await sleep(rand(100, 300));
     return origFrameSelectOption(selector, values, options);
   };
 
-  (frame as any).press = async (selector: string, key: string, options?: any) => {
+  (frame as any).press = async (selector: string, key: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     if (!await isFrameSelectorFocused(frame, selector)) {
       await frameClick(selector, options);
     }
@@ -672,8 +685,8 @@ function patchSingleFrame(
     await originals.keyboardPress(key);
   };
 
-  (frame as any).pressSequentially = async (selector: string, text: string, options?: any) => {
-    const callCfg = mergeConfig(cfg, options?.human_config);
+  (frame as any).pressSequentially = async (selector: string, text: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
+    const callCfg = mergeConfig(cfg, options?.human_config ?? options);
     if (!await isFrameSelectorFocused(frame, selector)) {
       await frameClick(selector, options);
     }
@@ -682,11 +695,11 @@ function patchSingleFrame(
     await humanType(page, rawKb, text, callCfg, cdp).catch(() => origFramePressSequentially?.(selector, text, options));
   };
 
-  (frame as any).tap = async (selector: string, options?: any) => {
+  (frame as any).tap = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     await frameClick(selector, options).catch(() => origFrameTap?.(selector, options));
   };
 
-  (frame as any).clear = async (selector: string, options?: any) => {
+  (frame as any).clear = async (selector: string, options?: Partial<HumanConfig> & ({ timeout?: number; human_config?: Partial<HumanConfig> })) => {
     if (!await isFrameSelectorFocused(frame, selector)) {
       await frameClick(selector, options);
     }
@@ -696,7 +709,15 @@ function patchSingleFrame(
     await originals.keyboardPress('Backspace');
   };
 
-  (frame as any).dragAndDrop = async (source: string, target: string, options?: any) => {
+  (frame as any).dragAndDrop = async (source: string, target: string, options?: {
+    force?: boolean;
+    noWaitAfter?: boolean;
+    sourcePosition?: { x: number; y: number };
+    strict?: boolean;
+    targetPosition?: { x: number; y: number };
+    timeout?: number;
+    trial?: boolean;
+  }) => {
     const srcBox = await firstFrameLocator(frame, source).boundingBox({ timeout: options?.timeout ?? 30000 }).catch(() => null);
     const tgtBox = await firstFrameLocator(frame, target).boundingBox({ timeout: options?.timeout ?? 30000 }).catch(() => null);
 
@@ -767,14 +788,14 @@ export function patchBrowser(browser: Browser, cfg: HumanConfig): void {
   }
 
   const origNewContext = browser.newContext.bind(browser);
-  (browser as any).newContext = async (options?: any) => {
+  (browser as any).newContext = async (options?: Parameters<typeof origNewContext>[0]) => {
     const context = await origNewContext(options);
     patchContext(context, cfg);
     return context;
   };
 
   const origNewPage = browser.newPage.bind(browser);
-  (browser as any).newPage = async (options?: any) => {
+  (browser as any).newPage = async (options?: Parameters<typeof origNewPage>[0]) => {
     const page = await origNewPage(options);
     if (!(page as any)._original) {
       const ctx = page.context();
