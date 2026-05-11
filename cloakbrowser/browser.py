@@ -902,10 +902,7 @@ def maybe_resolve_geoip(
         exit_ip = resolve_proxy_exit_ip(proxy_url)
         return timezone, locale, exit_ip
 
-    geo_result = resolve_proxy_geo_with_ip(proxy_url)
-    if geo_result is None:
-        return timezone, locale, None
-    geo_tz, geo_locale, exit_ip = geo_result
+    geo_tz, geo_locale, exit_ip = resolve_proxy_geo_with_ip(proxy_url)
     if timezone is None:
         timezone = geo_tz
     if locale is None:
@@ -937,8 +934,8 @@ def _resolve_webrtc_args(
         del args[idx]
         return args
     try:
-        from .geoip import _resolve_exit_ip
-        exit_ip = _resolve_exit_ip(proxy_url)
+        from .geoip import resolve_proxy_exit_ip
+        exit_ip = resolve_proxy_exit_ip(proxy_url)
     except Exception:
         logger.warning("Failed to resolve proxy exit IP for WebRTC spoofing; removing --fingerprint-webrtc-ip=auto")
         args = list(args)

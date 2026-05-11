@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import math
 import os
 import socket
 import tempfile
@@ -167,6 +168,8 @@ def _get_geoip_timeout_seconds() -> float:
     try:
         timeout = float(raw)
     except ValueError:
+        timeout = float("nan")
+    if not math.isfinite(timeout):
         logger.warning(
             "Invalid %s=%r; using %.1fs",
             GEOIP_TIMEOUT_ENV,

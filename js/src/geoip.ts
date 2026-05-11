@@ -232,9 +232,10 @@ async function resolveExitIp(proxyUrl: string, timeoutMs?: number): Promise<stri
           });
 
           connectReq.on("connect", (_res, socket) => {
+            const innerRemaining = remainingMs(deadline);
             const req = https.request(
               echoUrl,
-              { socket, timeout: Math.min(5_000, remaining ?? 5_000) } as any,
+              { socket, timeout: Math.min(5_000, innerRemaining ?? 5_000) } as any,
               (res) => {
                 let data = "";
                 res.on("data", (chunk: Buffer) => (data += chunk.toString()));
@@ -245,6 +246,7 @@ async function resolveExitIp(proxyUrl: string, timeoutMs?: number): Promise<stri
               }
             );
             req.on("error", () => resolve(null));
+            req.on("timeout", () => { req.destroy(); resolve(null); });
             req.end();
           });
 
@@ -374,14 +376,7 @@ export async function maybeResolveGeoip(
     return { timezone: options.timezone, locale: options.locale, exitIp };
   }
 
-  const geoResult = await resolveProxyGeo(proxyUrl);
-  if (!geoResult) {
-    return {
-      timezone: options.timezone,
-      locale: options.locale,
-    };
-  }
-  const { timezone: geoTz, locale: geoLocale, exitIp: geoExitIp } = geoResult;
+  const { timezone: geoTz, locale: geoLocale, exitIp: geoExitIp } = await resolveProxyGeo(proxyUrl);
   const exitIp = geoExitIp ?? undefined;
   return {
     timezone: options.timezone ?? geoTz ?? undefined,
