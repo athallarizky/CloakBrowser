@@ -8,6 +8,16 @@ Changes are tagged: **[wrapper]** for Python/JS wrapper, **[binary]** for Chromi
 
 ## [Unreleased]
 
+## [0.3.28] — 2026-05-11
+
+- **[wrapper]** **Security**: `cloakserve` — sanitize fingerprint seed to prevent path traversal, bind to `127.0.0.1` on bare metal, detect Podman containers (#217)
+- **[wrapper]** Fix GeoIP resolution hanging indefinitely — bounded with 10s timeout so `launch()` cannot stall (thanks [@manaskarra](https://github.com/manaskarra), #213)
+- **[wrapper]** JS: preserve iframe scope in humanized frame actions — `check()`, `uncheck()`, `selectOption()` now execute in the correct frame (thanks [@manaskarra](https://github.com/manaskarra), #201)
+- **[wrapper]** JS: add TypeScript types to humanized method options — `HumanActionOptions` type for `human_config` and `timeout` overrides (thanks [@eofreternal](https://github.com/eofreternal), #205)
+- **[wrapper]** Log when SOCKS5 credential auto-encoding rewrites a proxy URL (thanks [@Youhai020616](https://github.com/Youhai020616), #209)
+- **[wrapper]** JS: bump `playwright-core` peer dependency minimum to >=1.53.0 (#200)
+- **[meta]** Bump sigstore/cosign-installer in CI (#214)
+
 ## [0.3.27] — 2026-05-06
 
 - **[wrapper]** Per-call `human_config` override — pass `human_config={...}` to individual humanized methods to override global HumanConfig on a per-action basis (#183)
