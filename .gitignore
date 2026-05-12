@@ -15,7 +15,6 @@ venv/
 env/
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -46,6 +45,7 @@ js/dist/
 *.whl
 AGENTS.md
 .beads
+result
 
 # Private docs (launch posts, strategy)
 docs/
@@ -62,7 +62,6 @@ manager/
 # Release scripts
 publish.sh
 deploy.sh
-.env
 debug
 publish-docker.sh
 captures
@@ -72,3 +71,9 @@ captures
 .dolt/
 *.db
 .beads-credential-key
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
+config.bat
+node_modules
